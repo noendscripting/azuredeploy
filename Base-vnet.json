@@ -1,0 +1,92 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {  
+    "GatewaySubnetAdressPrefix": {
+      "defaultValue": "10.1.1.0/25",
+      "type": "string"
+    },
+    "VNETname": {
+      "type": "string",
+      "defaultValue": "VNET1"
+    },
+    "VNETPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/16"
+    },
+    "VNETSubnet1Name": {
+      "type": "string",
+      "defaultValue": "Subnet-Infrastructure"
+    },
+    "VNETSubnet1Prefix": {
+      "type": "string",
+      "defaultValue": "10.1.1.128/25"
+    },
+    "VNETSubnet2Name": {
+      "type": "string",
+      "defaultValue": "Subnet-FrontEnd"
+    },
+    "VNETSubnet2Prefix": {
+      "type": "string",
+      "defaultValue": "10.1.1.0/24"
+    }
+   
+   
+  },
+  "variables": {
+    "DCVnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('VNETname'))]",
+    "GatewaySubnetName": "GatewaySubnet",
+    "PROXYVnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('VNETname'))]",
+    "PROXYSubnetRef": "[concat(variables('PROXYVnetID'), '/subnets/', parameters('VNETSubnet2Name'))]",
+},
+  "resources": [
+    //VNET Settings
+    {
+      "name": "[parameters('VNETname')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      //"dependsOn": [
+      //  "Microsoft.Network/networkSecurityGroups/FENSG"
+      //],
+      "tags": {
+        "displayName": "VNET"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('VNETPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "GatewaySubnet",
+            "properties": {
+              "addressPrefix": "[parameters('GatewaySubnetAdressPrefix')]"
+            }
+          },
+          {
+            "name": "[parameters('VNETSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('VNETSubnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[parameters('VNETSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('VNETSubnet2Prefix')]"//,
+            //  "networkSecurityGroup": {
+            //  "id": "[resourceId('Microsoft.Network/networkSecurityGroups','FENSG')]"
+            //  }
+            }
+
+          }
+        ]
+      }
+    }
+   
+    
+  ],
+    "outputs": {
+    }
+}
