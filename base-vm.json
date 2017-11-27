@@ -143,7 +143,7 @@
       "name": "[variables('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
       ],
@@ -173,7 +173,7 @@
       "name": "[variables('publicIpAddressName')]",
       "Type": "Microsoft.Network/publicIpAddresses",
       "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "BaseVMPublicIP"
       },
