@@ -3,32 +3,25 @@
     "contentVersion": "1.0.0.0",
   "parameters": {  
     "GatewaySubnetAdressPrefix": {
-     // "defaultValue": "10.1.1.0/25",
       "type": "string"
     },
     "VNETname": {
-      "type": "string",
-      //"defaultValue": "VNET1"
+      "type": "string"      
     },
     "VNETPrefix": {
-      "type": "string",
-      //"defaultValue": "10.1.0.0/16"
+      "type": "string"
     },
     "VNETSubnet1Name": {
-      "type": "string",
-      //"defaultValue": "Subnet-Infrastructure"
+      "type": "string"
     },
     "VNETSubnet1Prefix": {
-      "type": "string",
-      //"defaultValue": "10.1.1.128/25"
+      "type": "string"
     },
     "VNETSubnet2Name": {
-      "type": "string",
-      //"defaultValue": "Subnet-FrontEnd"
+      "type": "string"
     },
     "VNETSubnet2Prefix": {
-      "type": "string",
-      //"defaultValue": "10.1.2.0/24"
+      "type": "string"
     }
    
    
