@@ -61,9 +61,7 @@
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
     "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
     "publicIpAddressName": "[concat(parameters('virtualMachineName'),'PUBLICIP')]",
-    "policyName": "[concat('shutdown-computevm-',parameters('virtualMachineName'))]",
     "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-    "BuildConfigScriptFolder": "lab",
     "BuildConfigScriptFileName": "Temp.ps1",
     "StorageAccount": "https://101stagingacc.blob.core.windows.net"
   },
