@@ -28,7 +28,7 @@
     },
     "VNETSubnet2Prefix": {
       "type": "string",
-      "defaultValue": "10.1.1.0/24"
+      "defaultValue": "10.1.2.0/24"
     }
    
    
