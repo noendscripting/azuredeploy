@@ -71,6 +71,12 @@
     },
     "VNETSubnet2Prefix": {
       "type": "string"
+    },
+    "NSGSubnet1": {
+      "type": "string"
+    },
+    "NSGSubnet2": {
+      "type": "string"
     }
 
 
@@ -119,6 +125,12 @@
           },
           "VNETSubnet2Prefix": {
             "value": "[parameters('VNETSubnet2Prefix')]"
+          },
+          "NSGSubnet1": {
+            "value": "[parameters('NSGSubnet1')]"
+          },
+          "NSGSubnet2": {
+            "value": "[parameters('NSGSubnet2')]"
           }
 
         }

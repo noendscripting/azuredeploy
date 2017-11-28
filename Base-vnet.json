@@ -22,6 +22,12 @@
     },
     "VNETSubnet2Prefix": {
       "type": "string"
+    },
+    "NSGSubnet1": {
+      "type": "string"
+    },
+    "NSGSubnet2": {
+      "type": "string"
     }
    
    
@@ -33,15 +39,41 @@
     "PROXYSubnetRef": "[concat(variables('PROXYVnetID'), '/subnets/', parameters('VNETSubnet2Name'))]",
 },
   "resources": [
+    // NSG BE
+    {
+      "comments": "# NSG",
+      "name": "[parameters('NSGSubnet1')]",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+        ]
+      }
+    },
+    // NSG FE
+    {
+      "comments": "# NSG",
+      "name": "[parameters('NSGSubnet2')]",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          
+        ]
+      }
+    },
     //VNET Settings
     {
       "name": "[parameters('VNETname')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
-      //"dependsOn": [
-      //  "Microsoft.Network/networkSecurityGroups/FENSG"
-      //],
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroup/',parameters('NSGSubnet1'))]",
+        "[concat('Microsoft.Network/networkSecurityGroup/',parameters('NSGSubnet2'))]"
+      ],
       "tags": {
         "displayName": "VNET"
       },
@@ -56,29 +88,33 @@
             "name": "GatewaySubnet",
             "properties": {
               "addressPrefix": "[parameters('GatewaySubnetAdressPrefix')]"
+             
             }
           },
           {
             "name": "[parameters('VNETSubnet1Name')]",
             "properties": {
-              "addressPrefix": "[parameters('VNETSubnet1Prefix')]"
+              "addressPrefix": "[parameters('VNETSubnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('NSGSubnet1'))]"
+              }
             }
           },
           {
             "name": "[parameters('VNETSubnet2Name')]",
             "properties": {
-              "addressPrefix": "[parameters('VNETSubnet2Prefix')]"//,
-            //  "networkSecurityGroup": {
-            //  "id": "[resourceId('Microsoft.Network/networkSecurityGroups','FENSG')]"
-            //  }
+              "addressPrefix": "[parameters('VNETSubnet2Prefix')]" //,
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('NSGSubnet2'))]"
+              }
             }
 
           }
         ]
       }
     }
-   
-    
+
+
   ],
     "outputs": {
     }
