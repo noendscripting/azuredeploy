@@ -103,7 +103,7 @@
           {
             "name": "[parameters('VNETSubnet2Name')]",
             "properties": {
-              "addressPrefix": "[parameters('VNETSubnet2Prefix')]" //,
+              "addressPrefix": "[parameters('VNETSubnet2Prefix')]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('NSGSubnet2'))]"
               }
