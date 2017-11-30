@@ -48,6 +48,19 @@
       "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
+          {
+            "name": "be-default-allow-rdp",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          }
         ]
       }
     },
@@ -60,7 +73,20 @@
       "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
-          
+          {
+            "name": "be-default-allow-rdp",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          }
+
         ]
       }
     },
@@ -71,8 +97,8 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroup/',parameters('NSGSubnet1'))]",
-        "[concat('Microsoft.Network/networkSecurityGroup/',parameters('NSGSubnet2'))]"
+        "[concat('Microsoft.Network/networkSecurityGroups/',parameters('NSGSubnet1'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/',parameters('NSGSubnet2'))]"
       ],
       "tags": {
         "displayName": "VNET"
