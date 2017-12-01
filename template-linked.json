@@ -136,7 +136,7 @@
         }
       }
     },
-    // Base VM
+     //Base VM
     {
       "name": "BaseVM",
       "type": "Microsoft.Resources/deployments",
