@@ -34,9 +34,8 @@
   },
   "variables": {
     "DCVnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('VNETname'))]",
-    "GatewaySubnetName": "GatewaySubnet",
-    "PROXYVnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('VNETname'))]",
-    "PROXYSubnetRef": "[concat(variables('PROXYVnetID'), '/subnets/', parameters('VNETSubnet2Name'))]",
+    "GatewaySubnetName": "GatewaySubnet"
+   
 },
   "resources": [
     // NSG BE
