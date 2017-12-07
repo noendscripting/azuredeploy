@@ -1,0 +1,1502 @@
+﻿{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "Test@2016"
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue":"vadmin" 
+    },
+    "App-SubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.97.3.0/24"
+    },
+    "DCISOSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.97.1.0/24"
+    },
+    "DCOpenSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.97.0.0/24"
+    },
+    "DMZ-SubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.97.2.0/24"
+    },
+    
+    "RootDCname": {
+      "type": "string",
+      "defaultValue": "RDC1"
+    },
+    "time": {
+      "type": "string",
+      "defaultValue": "23:00"
+    },
+    "toplevelForest": {
+      "type": "string",
+      "defaultValue": "contosoad.com"
+    },
+    "subdomainOne": {
+      "type": "string",
+      "defaultValue": "sd0"
+    },
+    "subdomainTwo": {
+      "type": "string",
+      "defaultValue": "sd1"
+    },
+    "UniqueStorageAccountName": {
+      "type": "string",
+      "maxLength": 20,
+      "metadata": {
+        "description": "Unique storage account name in .blob.core.windows.net namespace"
+      },
+      "defaultValue": "102eystorepoc"
+    },
+    "User-SubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.97.4.0/24"
+    },
+
+    "virtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1_v2"
+    },
+    "VirtualNetworkName": {
+      "type": "string",
+      "defaultValue": "VNET03"
+    },
+    "vnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.97.0.0/16"
+    },
+    "ADFSvmName": {
+      "type": "string",
+      "defaultValue": "ADFS1"
+    }
+    
+  },
+  "variables": {
+    //"vnetDeployURL": "[concat(parameters('_artifactsLocation'),'/Templates/azuredeploy-vNet.json',parameters('_artifactsLocationSasToken'))]",
+    //"subDomainDeployURL": "[concat(parameters('_artifactsLocation'),'/Templates/template-sdc.json',parameters('_artifactsLocationSasToken'))]",
+    "customScriptFolder": "CustomScripts",
+    "customScriptFiles": [
+      "Import.ps1",
+      "Groups.csv",
+      "Members.csv",
+      "Microsoft.Rba.LogFunctions.ps1",
+      "OUs.csv",
+      "Users.csv",
+      "SDCCustomScript.ps1"
+    ],
+    "RootDCNICName": "[concat(parameters('RootDCname'),'NIC')]",
+    "StorageAccountType": "Standard_LRS",
+    "StorageAccountName": "[parameters('UniqueStorageAccountName')]",
+    "RootDcDscConfigurationFunction": "DCConfig.ps1\\DcConfig",
+    "DscConfigDataFile": "ConfigDataAD.psd1",
+    "ImagePublisher": "MicrosoftWindowsServer",
+    "ImageOffer": "WindowsServer",
+    "WindowsOSVersion": "2012-R2-Datacenter",
+    "OSDiskName": "OSDisk",
+    "RootDCPublicIP": "[ concat(parameters('RootDCname'), 'PublicIP')]",
+    "RootDCpubVMDNSName": "[concat(toLower(parameters('RootDCname')),substring(uniqueString(resourceGroup().id),0,3))]",
+    "vnetSubnetName": [
+      "DC-Open-Subnet",
+      "DMZ-Subnet",
+      "DC-ISO-Subnet",
+      "App-Subnet",
+      "User-Subnet"
+    ],
+    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('VirtualNetworkName'))]",
+    "DCOpenSubnetRef": "[concat(variables('VnetID'), '/subnets/', variables('vnetSubnetName')[0])]",
+    "DMZ-SubnetRef": "[concat(variables('VnetID'), '/subnets/', variables('vnetSubnetName')[1])]",
+    "DCISOubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('vnetSubnetName')[2])]",
+    "AppSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('vnetSubnetName')[3])]",
+    "UserSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('vnetSubnetName')[4])]",
+    "DCOPenSubnetIPArray": "[split(parameters('DCOpenSubnetPrefix'),'.')]",
+    "domains": [
+      "[split(parameters('toplevelForest'),'.')[1]]",
+      "[parameters('toplevelForest')]",
+      "[concat(parameters('subdomainOne'),'.',parameters('toplevelForest'))]",
+      "[concat(parameters('subdomainTwo'),'.',parameters('subdomainOne'),'.',parameters('toplevelForest'))]"
+    ],
+    "subDCNames": [
+      "[concat(parameters('subdomainOne'),'DC')]",
+      "[concat(parameters('subdomainTwo'),'DC')]"
+
+    ],
+    "subDomainIndex": "[sub(length(variables('domains')),2)]",
+    "subDomains": "[skip(variables('domains'),variables('subDomainIndex'))]",
+    "subDomainCopyIndex": "[length(variables('subDomains'))]",
+    "DSCrchiveFolder": "DSC",
+    "DSCArchiveFileName": "dsc.zip",
+    "parentForestNetBios": "[split(parameters('topLevelForest'),'.')[0]]",
+    "availabilitySetNameWAP": "WAPAVSET",
+    "availabilitySetNameADFS": "ADFSAVSET",
+    "ADFSPublicIP": "[ concat(parameters('ADFSvmName'), 'PublicIP')]",
+    "ADFSDCpubVMDNSName": "[concat(toLower(parameters('ADFSvmName')),substring(uniqueString(resourceGroup().id),0,3))]",
+    "internalLoadBalancerName": "adfsIlb",
+    //"dnsIP": [ "10.97.0.4" ],
+    "dnsIP": [
+      "[concat(variables('DCOPenSubnetIPArray')[0],'.',variables('DCOPenSubnetIPArray')[1],'.',variables('DCOPenSubnetIPArray')[2],'.4')]"
+    ],
+    "adfsIP": [
+      "[concat(variables('DCOPenSubnetIPArray')[0],'.',variables('DCOPenSubnetIPArray')[1],'.',variables('DCOPenSubnetIPArray')[2],'.15')]"
+    ],
+    "ilbID": "[resourceId('Microsoft.Network/loadBalancers',variables('internalLoadBalancerName'))]",
+    "ilbFrontEndIPConfigID": "[concat(variables('ilbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+    "ilbPoolID": "[concat(variables('ilbID'),'/backendAddressPools/BackendPool1')]",
+    "ilbADFSProbeID": "[concat(variables('ilbID'),'/probes/ilbADFSProbe')]"
+  },
+  "resources": [
+    // Storage Account
+    {
+      "comments": "# Storage Account",
+      "name": "[variables('StorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-01-01",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "StorageAccount"
+      },
+      "sku": {
+        "name": "[variables('StorageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {
+
+        "encryption": {
+          "services": {
+            "blob": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+
+      }
+    },
+    // VNet Set up
+    {
+      "comments": "# Virtual Network",
+      "name": "[parameters('VirtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "Microsoft.Network/networkSecurityGroups/OpenDCSubnetNSG",
+        "Microsoft.Network/networkSecurityGroups/DMZSubnetNSG",
+        "Microsoft.Network/networkSecurityGroups/AppSubnetNSG",
+        "Microsoft.Network/networkSecurityGroups/DCISOSubnetNSG",
+        "Microsoft.Network/networkSecurityGroups/UserSubnetNSG"
+      ],
+      "tags": {
+        "displayName": "vnet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vnetSubnetName')[0]]",
+            "properties": {
+              "addressPrefix": "[parameters('DCOpenSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups','OpenDCSubnetNSG')]"
+              }
+            }
+          },
+          {
+            "name": "[variables('vnetSubnetName')[1]]",
+            "properties": {
+              "addressPrefix": "[parameters('DMZ-SubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups','DMZSubnetNSG')]"
+              }
+            }
+          },
+          {
+            "name": "[variables('vnetSubnetName')[2]]",
+            "properties": {
+              "addressPrefix": "[parameters('DCISOSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups','DCISOSubnetNSG')]"
+              }
+            }
+          },
+          {
+            "name": "[variables('vnetSubnetName')[3]]",
+            "properties": {
+              "addressPrefix": "[parameters('App-SubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups','AppSubnetNSG')]"
+              }
+            }
+          },
+          {
+            "name": "[variables('vnetSubnetName')[4]]",
+            "properties": {
+              "addressPrefix": "[parameters('User-SubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups','UserSubnetNSG')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    //NSG OpenDC
+    {
+      "comments": "# NSG",
+      "name": "OpenDCSubnetNSG",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "be-default-allow-rdp",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-default-allow-all-in",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "be-default-allow-all-out",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "10.97.1.0/24",
+              "access": "Allow",
+              "priority": 1200,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    },
+    // NSG FE
+    {
+      "comments": "# NSG",
+      "name": "DMZSubnetNSG",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "fe-default-allow-rdp",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "fe-default-allow-443-in",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "fe-default-allow-443-out",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1200,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "fe-default-allow-80-in",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1300,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "fe-default-allow-80-out",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1400,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "description": "Allow inbound traffic from azure load balancer",
+              "direction": "Inbound",
+              "priority": 500,
+              "protocol": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "*",
+              "access": "Allow"
+            }
+          }
+        ]
+      }
+    },
+    // NSG Apps
+    {
+      "name": "AppSubnetNSG",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "DC-ISO-outbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[parameters('DCISOSubnetPrefix')]",
+              "access": "Deny",
+              "priority": 1000,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "https-any-outbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1200,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "DC-Open-outbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[parameters('DCOpenSubnetPrefix')]",
+              "access": "Allow",
+              "priority": 1100,
+              "direction": "Outbound"
+            }
+          },
+
+
+          {
+            "name": "RDP-Internet-inbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 900,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "DC-ISO-inbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('DCISOSubnetPrefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "DC-Open-inbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('DCOpenSubnetPrefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http-vnet-inbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1300,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    // NSG DC Isolated
+    {
+      "name": "DCISOSubnetNSG",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "dc-open-outbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[parameters('DCOpenSubnetPrefix')]",
+              "access": "Allow",
+              "priority": 1200,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "https-any-outbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 1300,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "default-rdp-inbound-any",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "DC-Open-inbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('DCOpenSubnetPrefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "app-subnet-inbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('App-SubnetPrefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 1100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "User-subnet-inbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('User-SubnetPrefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1400,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    //NSG Users
+    {
+      "name": "UserSubnetNSG",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "user-http-oubound",
+            "properties": {
+              "direction": "Outbound",
+              "priority": 1000,
+              "destinationAddressPrefix": "Internet",
+              "sourceAddressPrefix": "[parameters('User-SubnetPrefix')]",
+              "destinationPortRange": "443",
+              "sourcePortRange": "*",
+              "protocol": "Tcp",
+              "access": "Allow"
+            }
+          },
+          {
+            "name": "dc-iso-outbound",
+            "properties": {
+              "direction": "Outbound",
+              "priority": 1200,
+              "destinationAddressPrefix": "[parameters('DCISOSubnetPrefix')]",
+              "sourceAddressPrefix": "[parameters('User-SubnetPrefix')]",
+              "destinationPortRange": "*",
+              "sourcePortRange": "*",
+              "protocol": "*",
+              "access": "Allow"
+            }
+          },
+          {
+            "name": "user-rdp-inbound",
+            "properties": {
+              "direction": "Inbound",
+              "priority": 1000,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "3389",
+              "sourcePortRange": "*",
+              "access": "Allow"
+            }
+
+          }
+
+        ]
+      }
+    },
+    // INTERNAL LOAD BALANCER for ADFS
+    {
+      "name": "[variables('internalLoadBalancerName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-05-01-preview",
+      "tags": {
+        "displayName": "ADFSLoadBalancer"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('VirtualNetworkName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('RootDCNICName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "loadBalancerFrontEnd",
+            "properties": {
+              "subnet": {
+                "id": "[variables('DCOpenSubnetRef')]"
+              },
+              "privateIPAddress": "[variables('adfsIP')[0]]"
+            }
+          }
+        ],
+        "backendAddressPools": [
+         {
+            "name": "BackendPool1"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "http-443",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('ilbfrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('ilbPoolID')]"
+              },
+             "protocol": "Tcp",
+             "frontendPort": 443,
+             "backendPort": 443,
+             "enableFloatingIP": false,
+             "idleTimeoutInMinutes": 5,
+             "probe": {
+              "id": "[variables('ilbADFSProbeID')]"
+             }
+           }
+         }
+       ],
+       "probes": [
+       {
+           "name": "ilbADFSProbe",
+           "properties": {
+             "protocol": "Http",
+             "port": 80,
+             "intervalInSeconds": 10,
+             "numberOfProbes": 2,
+             "requestPath": "/adfs/probe/"
+           }
+         }
+       ]
+     }
+   },
+    // AVAILABILITY SET - ADFS Servers
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetNameADFS')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "ADFSAvailaibilitySet"
+      },
+      "properties": {
+        "platformFaultDomainCount": 3,
+        "platformUpdateDomainCount": 5
+      }
+    },
+    // RootDC VM - VM promoted as Domain Controller, Enterprise Root CA is installed
+    {
+      "comments": "# RootDC VM",
+      "name": "[parameters('RootDCname')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('RootDCNICName'))]"
+      ],
+      "tags": {
+        "displayName": "RootDC VM"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('RootDCname')]",
+          "adminUsername": "[parameters('AdminUsername')]",
+          "adminPassword": "[parameters('AdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('ImagePublisher')]",
+            "offer": "[variables('ImageOffer')]",
+            "sku": "[variables('WindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('RootDCname'),'-',variables('OSDiskName'))]",
+            "vhd": {
+              "uri": "[concat('http://', variables('StorageAccountName'), '.blob.core.windows.net/vhds/',parameters('RootDCname'),'-',variables('OSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "datadisk0",
+              "diskSizeGB": "30",
+              "lun": 0,
+              "vhd": {
+                "uri": "[concat('http://', variables('storageaccountName'), '.blob.core.windows.net/vhds/',parameters('RootDCname'), '-datadisk-0.vhd')]"
+              },
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('RootDCNICName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        // Setting up VM as Domain Controller
+        {
+          "name": "DCConfig",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('RootDCname'))]"
+          ],
+          "tags": {
+            "displayName": "DCConfig"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.13",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "modulesUrl": "[concat(parameters('_artifactsLocation'), '/', 'dsc.zip')]",
+              "sasToken": "[parameters('_artifactsLocationSasToken')]",
+              "configurationFunction": "[variables('RootDcDscConfigurationFunction')]",
+              "properties": {
+                "nodeName": "localhost",
+                "DomainName": "[parameters('toplevelForest')]",
+                "DomainAdminCredentials": {
+                  "UserName": "[parameters('AdminUserName')]",
+                  "Password": "PrivateSettingsRef:DomainAdminPassword",
+                  "dnsIP": "[variables('dnsIP')[0]]",
+                  "DNSSearchSuffix": "[variables('domains')]"
+                }
+              }
+            },
+            "protectedSettings": {
+              "dataBlobUri": "[concat(parameters('_artifactsLocation'), '/DSC/', variables('DscConfigDataFile'), parameters('_artifactsLocationSasToken'))]",
+              "items": {
+                "DomainAdminPassword": "[parameters('AdminPassword')]"
+              }
+            }
+          }
+        },
+        // Importing users and groups
+        {
+          "apiVersion": "2015-05-01-preview",
+          "type": "extensions",
+          "name": "ImportActivity",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('RootDCname'))]",
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('RootDCname'),'/extensions/DCConfig')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/',variables('customScriptFolder'), '/',  variables('customScriptFiles')[0], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/',variables('customScriptFolder'), '/',  variables('customScriptFiles')[1], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/',variables('customScriptFolder'), '/',  variables('customScriptFiles')[2], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/',variables('customScriptFolder'), '/',  variables('customScriptFiles')[3], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/',variables('customScriptFolder'), '/',  variables('customScriptFiles')[4], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/',variables('customScriptFolder'), '/',  variables('customScriptFiles')[5], parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ',variables('customScriptFolder'), '/', variables('customScriptFiles')[0])]"
+            }
+          }
+        }
+      ]
+    },
+    // RootDC Nic
+    {
+      "comments": "# RootDC NIC",
+      "name": "[variables('RootDCNICName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId(subscription().subscriptionId,resourceGroup().name,'Microsoft.Network/virtualNetworks/',parameters('VirtualNetworkName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('RootDCPublicIP'))]"
+      ],
+      "tags": {
+        "displayName": "RootDCNIC"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('dnsIP')[0]]",
+              "subnet": {
+                "id": "[variables('DCOpenSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('RootDCPublicIP'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    //Root DC Public IP
+    {
+      "comments": "# DC Public IP",
+      "name": "[variables('RootDCPublicIP')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "RootDCPublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('RootDCpubVMDNSName')]"
+        }
+      }
+    },
+    // ADFS VM
+    {
+      "comments": "# ADFS VM",
+      "name": "[parameters('ADFSvmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('ADFSvmName'),'NIC')]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetNameADFS'))]"
+      ],
+      "tags": {
+        "displayName": "ADFS"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetNameADFS'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('ADFSvmName')]",
+          "adminUsername": "[parameters('AdminUsername')]",
+          "adminPassword": "[parameters('AdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('ImagePublisher')]",
+            "offer": "[variables('ImageOffer')]",
+            "sku": "[variables('WindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('ADFSvmName'),'-osdisk')]",
+            "vhd": {
+              "uri": "[concat('http://', variables('StorageAccountName'), '.blob.core.windows.net/vhds/',parameters('ADFSvmName'),'-osdisk' , '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('ADFSvmName'),'NIC'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        // Join domain - Json AD Domain Extension
+        {
+          "comments": "Join domain - JsonADDomainExtension",
+          "apiVersion": "2015-06-15",
+          "type": "extensions",
+          "name": "joinDomain",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('ADFSvmName'))]",
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('RootDCname'),'/extensions/ImportActivity')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "JsonADDomainExtension",
+            "typeHandlerVersion": "1.0",
+            "settings": {
+              "Name": "[parameters('toplevelForest')]",
+              "User": "[concat(parameters('toplevelForest'), '\\', parameters('AdminUserName'))]",
+              "Restart": "true",
+              "Options": 3
+            },
+            "protectedsettings": {
+              "Password": "[parameters('AdminPassword')]"
+            }
+          }
+        }
+      ]
+    },
+    //ADFS Nic
+    {
+      "comments": "# ADFS NIC",
+      "name": "[concat(parameters('ADFSvmName'),'NIC')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('VirtualNetworkName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('ADFSPublicIP'))]",
+        "[concat('Microsoft.Network/loadBalancers/',variables('internalLoadbalancerName'))]"
+      ],
+      "tags": {
+        "displayName": "ADFSNIC"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('DCOpenSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('ADFSPublicIP'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(variables('ilbID'), '/backendAddressPools/BackendPool1')]"
+                }
+              ]
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": "[variables('dnsIP')]"
+        }
+      }
+    },
+    {
+      "comments": "# ADFC Public IP",
+      "name": "[variables('ADFSPublicIP')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "ADFSPublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('ADFSDCpubVMDNSName')]"
+        }
+      }
+    },
+    //Sub DC0 VM
+    {
+      "comments": "# Sub DC0 VM",
+      "name": "[toUpper(concat(variables('subDCNames')[0]))]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "SubDC0"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/',variables('subDCNames')[0],'NIC')]",
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('RootDCname'),'/extensions/ImportActivity')]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[toUpper(concat(variables('subDCNames')[0]))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('ImagePublisher')]",
+            "offer": "[variables('ImageOffer')]",
+            "sku": "[variables('WindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "name": "[toLower(concat(variables('subDCNames')[0]))]",
+            "vhd": {
+              "uri": "[concat('http://',parameters('UniqueStorageAccountName'),'.blob.core.windows.net/vhds/',variables('subDCNames')[0],'-osdisk.vhd')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "createOption": "Empty",
+              "diskSizeGB": "20",
+              "lun": 0,
+              "name": "datadisk0",
+              "vhd": {
+                "uri": "[concat('http://',parameters('UniqueStorageAccountName'),'.blob.core.windows.net/vhds/',variables('subDCNames')[0],'-datadisk-0.vhd')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('subDCNames')[0],'NIC'))]"
+            }
+          ]
+
+        }
+      },
+      "resources": [
+        {
+          "name": "[toUpper(concat(variables('subDCNames')[0],'DSC'))]",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',variables('subDCNames')[0])]"
+            //"[concat('Microsoft.Compute/virtualMachines/',parameters('RootDCname'),'/extensions/ImportActivity')]"
+          ],
+          "tags": {
+            "displayName": "SD0DCDSC"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "forceUpdateTag": "1.0",
+            "settings": {
+              "configuration": {
+                "url": "[concat(parameters('_artifactsLocation'), '/', variables('DSCArchiveFileName'))]",
+
+                "script": "SDC.ps1",
+                "function": "Main"
+              },
+              "configurationData": {
+                "url": "[concat(parameters('_artifactsLocation'),'/DSC/',variables('dscConfigDataFile'),parameters('_artifactsLocationSasToken'))]"
+              },
+              "configurationArguments": {
+                "nodeName": "localhost",
+                "DataDiskNumber": "2",
+                "DataDriveLetter": "F",
+                "DomainAdminCredentials": {
+                  "UserName": "[concat(variables('parentForestNetBios'),'\\',parameters('adminUsername'))]",
+                  "Password": "[parameters('AdminPassword')]"
+                },
+                "parentForest": "[parameters('toplevelForest')]",
+                "domainName": "[split(variables('subDomains')[0],'.')[0]]",
+                "DNSSearchSuffix": "[variables('domains')]"
+              }
+
+
+
+            },
+
+            "protectedSettings": {
+              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
+              "configurationArgumnets": {
+
+
+              }
+            }
+          }
+
+        },
+        {
+          "name": "[toUpper(concat(variables('subDCNames')[0],'CS'))]",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('subDCNames')[0])]",
+            "[concat('Microsoft.Compute/virtualMachines/', variables('subDCNames')[0],'/extensions/',variables('subDCNames')[0],'DSC')]"
+          ],
+          "tags": {
+            "displayName": "SDC0CustomScript"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/CustomScripts/SDCCustomScript.ps1', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CustomScripts/remove-subdomain-lab.ps1', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CustomScripts/OUs.csv', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CustomScripts/',parameters('subdomainOne'),'-users.csv', parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File CustomScripts/SDCCustomScript.ps1"
+            }
+          }
+        }
+
+      ]
+    },
+    //Sub DC0 NiC
+    {
+      "name": "[toUpper(concat(variables('subDCNames')[0],'NIC'))]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "SubDC0NIC"
+      },
+      "dependsOn": [
+        "[resourceId(subscription().subscriptionId,resourceGroup().name,'Microsoft.Network/virtualNetworks/',parameters('VirtualNetworkName'))]",
+        "[concat('Microsoft.Network/publicIpAddresses/', variables('subDCNames')[0],'PublicIP')]"
+      ],
+
+      "properties": {
+        "primary": true,
+        "dnsSettings": {
+          "dnsServers": "[variables('dnsIP')]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('DCISOubnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIpAddress": {
+                "id": "[resourceid('Microsoft.Network/publicIpAddresses/', concat(variables('subDCNames')[0],'PublicIP'))]"
+              }
+            }
+          }
+        ]
+
+      }
+    },
+    //Sub DC0 Public IP
+    {
+      "name": "[concat(variables('subDCNames')[0],'PublicIP')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "SubDC0PublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[tolower(concat(variables('subDCNames')[0],substring(uniqueString(resourceGroup().id),0,3)))]"
+        }
+
+      }
+    },
+    // Sub DC1 VM
+    {
+      "comments": "# Sub DC1 VM",
+      "name": "[toUpper(concat(variables('subDCNames')[1]))]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "SubDC1"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/',variables('subDCNames')[1],'NIC')]",
+        "[concat('Microsoft.Compute/virtualMachines/',variables('subDCNames')[0],'/extensions/',toUpper(concat(variables('subDCNames')[0],'CS')))]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[toUpper(variables('subDCNames')[1])]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('ImagePublisher')]",
+            "offer": "[variables('ImageOffer')]",
+            "sku": "[variables('WindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "name": "[toLower(variables('subDCNames')[1])]",
+            "vhd": {
+              "uri": "[concat('http://',parameters('UniqueStorageAccountName'),'.blob.core.windows.net/vhds/',variables('subDCNames')[1],'-osdisk.vhd')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "createOption": "Empty",
+              "diskSizeGB": "20",
+              "lun": 0,
+              "name": "datadisk0",
+              "vhd": {
+                "uri": "[concat('http://',parameters('UniqueStorageAccountName'),'.blob.core.windows.net/vhds/',variables('subDCNames')[1],'-datadisk-0.vhd')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('subDCNames')[1], 'NIC'))]"
+            }
+          ]
+
+        }
+      },
+      "resources": [
+        {
+          "name": "[toUpper(concat(variables('subDCNames')[1],'DSC'))]",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',variables('subDCNames')[1])]"
+           
+
+          ],
+          "tags": {
+            "displayName": "SDCDSC"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "forceUpdateTag": "1.0",
+            "settings": {
+              "configuration": {
+                "url": "[concat(parameters('_artifactsLocation'), '/', variables('DSCArchiveFileName'))]",
+
+                "script": "SDC.ps1",
+                "function": "Main"
+              },
+              "configurationData": {
+                "url": "[concat(parameters('_artifactsLocation'),'/DSC/',variables('dscConfigDataFile'),parameters('_artifactsLocationSasToken'))]"
+              },
+              "configurationArguments": {
+                "nodeName": "localhost",
+                "DataDiskNumber": "2",
+                "DataDriveLetter": "F",
+                "DomainAdminCredentials": {
+                  "UserName": "[concat(variables('parentForestNetBios'),'\\',parameters('adminUsername'))]",
+                  "Password": "[parameters('AdminPassword')]"
+                },
+                "parentForest": "[variables('subDomains')[0]]",
+                "domainName": "[split(variables('subDomains')[1],'.')[0]]",
+                "DNSSearchSuffix": "[variables('domains')]"
+              }
+
+
+
+            },
+
+            "protectedSettings": {
+              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
+              "configurationArgumnets": {
+
+
+              }
+            }
+          }
+
+        },
+        {
+          "name": "[toUpper(concat(variables('subDCNames')[1],'CS'))]",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('subDCNames')[1])]",
+            "[concat('Microsoft.Compute/virtualMachines/', variables('subDCNames')[1],'/extensions/',variables('subDCNames')[1],'DSC')]"
+          ],
+          "tags": {
+            "displayName": "SD1CCustomScript"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/CustomScripts/SDCCustomScript.ps1', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CustomScripts/remove-subdomain-lab.ps1', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CustomScripts/OUs.csv', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CustomScripts/',parameters('subdomainOne'),'-users.csv', parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File CustomScripts/SDCCustomScript.ps1"
+            }
+          }
+        }
+
+      ]
+    },
+    //Sub DC1 NiC
+    {
+      "name": "[toUpper(concat(variables('subDCNames')[1],'NIC'))]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "SubDC1NIC"
+      },
+      "dependsOn": [
+        "[resourceId(subscription().subscriptionId,resourceGroup().name,'Microsoft.Network/virtualNetworks/',parameters('VirtualNetworkName'))]",
+        "[concat('Microsoft.Network/publicIpAddresses/', variables('subDCNames')[1],'PublicIP')]"
+      ],
+
+      "properties": {
+        "primary": true,
+        "dnsSettings": {
+          "dnsServers": "[variables('dnsIP')]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('DCISOubnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIpAddress": {
+                "id": "[resourceid('Microsoft.Network/publicIpAddresses/', concat(variables('subDCNames')[1],'PublicIP'))]"
+              }
+            }
+          }
+        ]
+
+      }
+    },
+    //Sub DC1 Public IP
+    {
+      "name": "[concat(variables('subDCNames')[1],'PublicIP')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "SubDC1PublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[tolower(concat(variables('subDCNames')[1],substring(uniqueString(resourceGroup().id),0,3)))]"
+        }
+
+      }
+    }
+
+
+    /*{
+      "apiVersion": "2016-05-15",
+      "type": "Microsoft.DevTestLab/schedules",
+      "name": "RooDCShutodwn",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [ "[resourceId('Microsoft.Compute/virtualMachines',parameters('RootDCname'))]" ],
+      "properties": {
+        "status": "Enabled",
+        "timeZoneId": "Eastern Standard Time",
+        "taskType": "ComputeVmShutdownTask",
+        "notificationSettings": {
+          "status": "Disabled",
+          "timeInMinutes": 15,
+          "webhookUrl": null
+        },
+        "targetResourceId":"[resourceId('Microsoft.Compute/virtualMachines', parameters('RootDCname'))",
+        "dailyRecurrence": {
+          "time": "[parameters('time')]"
+        }
+      }
+    }*/
+
+
+  ],
+  "outputs": {
+    "RootDCFQDN": {
+      "type": "array",
+      "value": [
+        "[reference(resourceId('Microsoft.Network/publicIPAddresses/',variables('RootDCPublicIP'))).DNSSettings.fqdn]",
+        "[reference(resourceId('Microsoft.Network/publicIPAddresses/',concat(variables('subDCNames')[0],'PublicIP'))).DNSSettings.fqdn]",
+        "[reference(resourceId('Microsoft.Network/publicIPAddresses/',concat(variables('subDCNames')[1],'PublicIP'))).DNSSettings.fqdn]"
+      ]
+    },
+    "index": {
+      "type": "int",
+      "value": "[variables('subDomainCopyIndex')]"
+    }
+
+  }
+}
