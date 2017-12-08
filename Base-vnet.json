@@ -47,7 +47,7 @@
       "properties": {
         "securityRules": [
           {
-            "name": "be-default-allow-rdp",
+            "name": "default-allow-rdp-in",
             "properties": {
               "protocol": "Tcp",
               "sourcePortRange": "*",
@@ -57,6 +57,19 @@
               "access": "Allow",
               "priority": 1000,
               "direction": "Inbound"
+            }
+          },
+          {
+            "name": "default-allow-https-out",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 500,
+              "direction": "Outbound"
             }
           }
         ]
@@ -72,7 +85,7 @@
       "properties": {
         "securityRules": [
           {
-            "name": "be-default-allow-rdp",
+            "name": "default-allow-rdp-in",
             "properties": {
               "protocol": "Tcp",
               "sourcePortRange": "*",
@@ -83,10 +96,22 @@
               "priority": 1000,
               "direction": "Inbound"
             }
-          }
+          },
+          {
+            "name": "default-allow-https-out",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 500,
+              "direction": "Outbound"
+            }
 
-        ]
-      }
+            ]
+          }
     },
     //VNET Settings
     {
