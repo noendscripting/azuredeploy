@@ -58,6 +58,19 @@
               "priority": 1000,
               "direction": "Inbound"
             }
+          },
+          {
+            "name": "default-allow-winrm-in",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "5986",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 1500,
+              "direction": "Inbound"
+            }
           }
         ]
       }
@@ -81,6 +94,19 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "default-allow-winrm-in",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "5986",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 1500,
               "direction": "Inbound"
             }
           }
