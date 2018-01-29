@@ -70,7 +70,7 @@
       "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2017-03-30",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
       ],
@@ -119,9 +119,9 @@
             }
           ]
 
-        },
+        }
 
-      }//,
+      } //,
       //"resources": [
       //  {
       //    "name": "BuildConfig",
@@ -154,7 +154,7 @@
       "name": "[variables('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
+      "location": "[ resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
       ],

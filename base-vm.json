@@ -110,33 +110,7 @@
 
         }
 
-      } //,
-      //"resources": [
-      //  {
-      //    "name": "BuildConfig",
-      //    "type": "extensions",
-      //    "location": "[parameters('location')]",
-      //    "apiVersion": "2015-06-15",
-      //    "dependsOn": [
-      //      "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
-      //    ],
-      //    "tags": {
-      //      "displayName": "BuildConfig"
-      //    },
-      //    "properties": {
-      //      "publisher": "Microsoft.Compute",
-      //      "type": "CustomScriptExtension",
-      //      "typeHandlerVersion": "1.9",
-      //      "autoUpgradeMinorVersion": true,
-      //      "settings": {
-      //        "fileUris": [
-      //          "[concat(variables('StorageAccount'), '/', variables('BuildConfigScriptFolder'), '/', variables('BuildConfigScriptFileName'), parameters('sasKey'))]"
-      //        ],
-      //        "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('BuildConfigScriptFileName'))]"
-      //      }
-      //    }
-      //  }
-      //]
+      } 
     },
 
     {
