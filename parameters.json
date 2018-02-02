@@ -1,0 +1,33 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus2"
+    },
+    "virtualMachineName": {
+      "value": "ClientTest"
+    },
+    "virtualMachineSize": {
+      "value": "Standard_D2_v2"
+    },
+    "adminUsername": {
+      "value": "vadmin"
+    },
+    "virtualNetworkName": {
+      "value": "LimitedVnet"
+    },
+    "subnetName": {
+      "value": "FirstSubnet"
+    },
+    "adminPassword": {
+      "value": "Test@2016"
+    },
+    "dnsIp": {
+      "value": "10.1.2.4"
+    },
+    "domain": {
+      "value": "nibroso.com"
+    }
+  }
+}

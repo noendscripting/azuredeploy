@@ -1,0 +1,241 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "EastUs2"
+    },
+    "virtualMachineName": {
+      "type": "string"
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2"
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "VADMIN"
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "VNET02"
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "Test@2016"
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "BackendSubnet"
+    },
+    "publicIpAddressType": {
+      "type": "string",
+      "defaultValue": "Dynamic"
+    },
+    "time": {
+      "type": "string",
+      "defaultValue": "23:00"
+    },
+    "vmCount": {
+      "type": "int",
+      "minValue": 1
+    },
+    "dnsIP": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "virtualNetResourceGroupName": {
+      "type": "string",
+      "defaultValue": "NetworkSubnet"
+    }
+
+  },
+  "variables": {
+    "VnetID": "[resourceId(parameters('virtualNetResourceGroupName'),'Microsoft.Network/virtualNetworks', parameters('virtualNetworkname'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+    "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
+    "publicIpAddressName": "[concat(parameters('virtualMachineName'),'PUBLICIP')]",
+    "policyName": "[concat('shutdown-computevm-',parameters('virtualMachineName'))]",
+    "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
+    "BuildConfigScriptFolder": "lab",
+    "BuildConfigScriptFileName": "Temp.ps1",
+    "StorageAccount": "https://101stagingacc.blob.core.windows.net"
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('virtualMachineName'),copyIndex())]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "dependsOn": [
+        "nicLoop"
+      ],
+      "tags": {
+        "displayName": "BaseVM"
+      },
+      "properties": {
+        "osProfile": {
+          "computerName": "[concat(parameters('virtualMachineName'),copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftVisualStudio",
+            "offer": "Windows",
+            "sku": "Win7-SP1-Ent-N-x64",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'),copyIndex()))]"
+            }
+          ]
+
+        }
+
+      },
+      "resources": [
+        // Join domain - Json AD Domain Extension
+        {
+          "comments": "Join domain - JsonADDomainExtension",
+          "apiVersion": "2015-06-15",
+          "type": "extensions",
+          "name": "joinDomain",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('virtualMachineName'),copyIndex())]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+
+            "type": "JsonADDomainExtension",
+            "typeHandlerVersion": "1.0",
+            "settings": {
+              "Name": "[parameters('Domain')]",
+              "User": "[concat(parameters('Domain'), '\\', parameters('AdminUserName'))]",
+              "OUPath": "OU=Company Computers,DC=Nibroso,DC=com",
+              "Restart": "true",
+              "Options": 3
+            },
+            "protectedsettings": {
+              "Password": "[parameters('AdminPassword')]"
+            }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "[concat(variables('networkInterfaceName'),copyIndex())]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "dependsOn": [
+        "PublicNicLoop"
+      ],
+      "tags": {
+        "displayName": "BaseVMNIC"
+      },
+      "properties": {
+        "primary": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIpAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', concat(variables('publicIpAddressName'),copyIndex()))]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [ "[parameters('dnsIP')]" ]
+        }
+
+      }
+    },
+    {
+      "name": "[concat(variables('publicIpAddressName'),copyIndex())]",
+      "Type": "Microsoft.Network/publicIpAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "PublicNicLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "tags": {
+        "displayName": "BaseVMPublicIP"
+      },
+      "Properties": {
+        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+      }
+    },
+    {
+      "apiVersion": "2016-05-15",
+      "Type": "Microsoft.DevTestLab/schedules",
+      "name": "[concat(variables('policyName'),copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "ScheduleLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "dependsOn": [ "vmLoop" ],
+      "tags": {
+        "displayName": "BaseVMShutdown-11:00pm"
+      },
+      "properties": {
+        "status": "Enabled",
+        "timeZoneId": "Eastern Standard Time",
+        "taskType": "ComputeVmShutdownTask",
+        "notificationSettings": {
+          "status": "Disabled",
+          "timeInMinutes": 15,
+          "webhookUrl": null
+        },
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines',concat(parameters('virtualMachineName'),copyIndex()))]",
+        "dailyRecurrence": {
+          "time": "[parameters('time')]"
+        }
+      }
+    }
+
+  ],
+  "outputs": {
+    "adminUsername": {
+      "type": "string",
+      "value": "[parameters('adminUsername')]"
+    }
+  }
+}
