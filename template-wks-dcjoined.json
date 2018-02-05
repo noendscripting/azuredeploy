@@ -187,23 +187,23 @@
       }
     },
     {
-      "name": "[concat(variables('publicIpAddressName'),copyIndex())]",
-      "Type": "Microsoft.Network/publicIpAddresses",
       "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
       "copy": {
         "name": "PublicNicLoop",
         "count": "[parameters('vmCount')]"
       },
-      "tags": {
-        "displayName": "BaseVMPublicIP"
-      },
+      "location": "[parameters('location')]",
+      "name": "[concat(variables('publicIpAddressName'),copyIndex())]",
       "Properties": {
         "publicIpAllocationMethod": "[parameters('publicIpAddressType')]",
         "dnsSettings": {
           "domainNameLabel": "[concat(toLower(parameters('virtualMachineName')),copyIndex(),'wks')]"
         }
-      }
+      },
+      "tags": {
+        "displayName": "BaseVMPublicIP"
+      },
+      "Type": "Microsoft.Network/publicIpAddresses"
     },
     {
       "apiVersion": "2016-05-15",
@@ -233,7 +233,6 @@
         }
       }
     }
-
   ],
   "outputs": {
     "adminUsername": {
