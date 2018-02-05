@@ -199,7 +199,10 @@
         "displayName": "BaseVMPublicIP"
       },
       "Properties": {
-        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(toLower(parameters('virtualMachineName')[0]),copyIndex(),'wks')]"
+        }
       }
     },
     {
