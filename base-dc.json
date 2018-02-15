@@ -48,16 +48,26 @@
     },
     "sasKey": {
       "type": "string",
-        "defaultValue": "odhdtdt"
+      "defaultValue": "odhdtdt"
     },
     "dataDriveCount": {
       "type": "int",
       "minValue": 1
+    },
+    "dnsIp": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "virtualNetResourceGroupName": {
+      "type": "string",
+      "defaultValue": "NetworkSubnet"
     }
 
   },
   "variables": {
-    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkname'))]",
+    "VnetID": "[resourceId(parameters('virtualNetResourceGroupName'),'Microsoft.Network/virtualNetworks', parameters('virtualNetworkname'))]",
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
     "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
     "publicIpAddressName": "[concat(parameters('virtualMachineName'),'PUBLICIP')]",
