@@ -14,7 +14,9 @@ Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
     
   ##Verify if PSWindowsUpdate PowerShell Module is installed. If not install.
   # if (!(Get-Module -Name PSWindowsUpdate -List)){
-    Set-PSRepository -Name PSGallery -InstallationPolicy Trusted 
+    
+    Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
    Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources -Scope AllUsers -Confirm:$false -Force
   #  }
   #  Get-WUInstall -WindowsUpdate -AcceptAll -AutoReboot -Confirm:$FALSE -ErrorAction stop
