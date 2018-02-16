@@ -14,10 +14,12 @@ try
   }
     
   ##Verify if PSWindowsUpdate PowerShell Module is installed. If not install.
-  #  if (!(Get-Module -Name PSWindowsUpdate -List)){
-  #      Install-Module -Name PSWindowsUpdate -Scope AllUsers -Confirm:$false -Force
+  # if (!(Get-Module -Name PSWindowsUpdate -List)){
+   Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources -Scope AllUsers -Confirm:$false -Force
   #  }
   #  Get-WUInstall -WindowsUpdate -AcceptAll -AutoReboot -Confirm:$FALSE -ErrorAction stop
+Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=839516" -OutFile "$($env:TEMP)\wmf5.1.msu"
+Start-Process -FilePath 'wusa.exe' -ArgumentList "$($env:TEMP)\wmf5.1.msu /quiet /noreboot"
 }
 catch
 {
