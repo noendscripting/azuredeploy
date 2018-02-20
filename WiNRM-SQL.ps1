@@ -15,8 +15,9 @@ if (!(Get-Module -Name PowerShellGet))
 
   
     
-Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+
 Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources -Scope AllUsers -Confirm:$false -Force
 Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=839516" -OutFile "$($PWD)\wmf5.1.msu"
 Start-Process -FilePath 'wusa.exe' -ArgumentList "$($PWD)\wmf5.1.msu /quiet /noreboot" -NoNewWindow -Wait
