@@ -51,7 +51,11 @@ $SQLRSAccountCredentials = New-Object System.Management.Automation.PSCredential 
 
 
 
-Import-DscResource -ModuleName SQLServerDSC,StorageDSC,PSDesiredStateConfiguration
+Import-DscResource -ModuleName SQLServerDSC
+Import-DscResource -ModuleName StorageDSC
+Import-DscResource -Module PSDscResources -ModuleVersion 2.8.0.0
+
+
 
 Node $NodeName {
     LocalConfigurationManager
