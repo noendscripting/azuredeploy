@@ -5,7 +5,7 @@ $MyData =
     AllNodes = @(
     
     @{
-            NodeName="SQL2014SCCM"
+            NodeName="sql2014sccm.eastus2.cloudapp.azure.com"
 			RetryCount = 20  
             RetryIntervalSec = 30  
             PSDscAllowPlainTextPassword=$true
@@ -51,7 +51,10 @@ $SQLRSAccountCredentials = New-Object System.Management.Automation.PSCredential 
 
 
 
-Import-DscResource -ModuleName SQLServerDSC,StorageDSC,PSDesiredStateConfiguration
+Import-DscResource -ModuleName 'SQLServerDSC'
+Import-DscResource -ModuleName 'StorageDSC'
+Import-DscResource -ModuleName 'PSDscResources' -ModuleVersion 2.8.0.0
+
 
 Node $NodeName {
     LocalConfigurationManager
@@ -182,6 +185,17 @@ Node $NodeName {
 
     }
 
+    SqlServerMemory Set_SQLServerMinAndMaxMemory_ToAuto
+        {
+            Ensure               = 'Present'
+            DynamicAlloc         = $true
+            ServerName           = 'sql2014sccm'
+            InstanceName         = 'MSSQLSERVER'
+            MinMemory            = 8192
+            PsDscRunAsCredential = $SqlAdministratorCredential
+        }
+
+
     
         
                       
@@ -191,7 +205,7 @@ Node $NodeName {
 
 }
 }
-ConfigurationSQL -Nodename sql2014sccm -ConfigurationData $MyData
+ConfigurationSQL -Nodename sql2014sccm.eastus2.cloudapp.azure.com -ConfigurationData $MyData
 
 <#$sqlinstance = "MSSQLSERVER"
 $sqlFQDN = "SQL2014SCCM.contosoad.com"
