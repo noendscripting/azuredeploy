@@ -51,9 +51,16 @@ $SQLRSAccountCredentials = New-Object System.Management.Automation.PSCredential 
 
 
 
+<<<<<<< HEAD
 Import-DscResource -ModuleName 'SQLServerDSC'
 Import-DscResource -ModuleName 'StorageDSC'
 Import-DscResource -ModuleName 'PSDscResources' -ModuleVersion 2.8.0.0
+=======
+Import-DscResource -ModuleName SQLServerDSC
+Import-DscResource -ModuleName StorageDSC
+Import-DscResource -Module PSDscResources -ModuleVersion 2.8.0.0
+
+>>>>>>> 3880833ab06434781402a1023e4919dd2e2d4318
 
 
 Node $NodeName {
