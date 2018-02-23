@@ -28,7 +28,7 @@ Configuration ConfigurationSQL
         [PSCredential]$DomainCredentials,        
 		[string]$DomainName,
 		[array]$DNSSearchSuffix,
-		[string]$dNSIP
+        [string]$SQLSourceFolder  = "C:\SQLCD"
 
 	)
 
@@ -51,38 +51,26 @@ $SQLRSAccountCredentials = New-Object System.Management.Automation.PSCredential 
 
 
 
-<<<<<<< HEAD
-Import-DscResource -ModuleName 'SQLServerDSC'
-Import-DscResource -ModuleName 'StorageDSC'
-Import-DscResource -ModuleName 'PSDscResources' -ModuleVersion 2.8.0.0
-=======
 Import-DscResource -ModuleName SQLServerDSC
 Import-DscResource -ModuleName StorageDSC
 Import-DscResource -Module PSDscResources -ModuleVersion 2.8.0.0
-
->>>>>>> 3880833ab06434781402a1023e4919dd2e2d4318
-
-
 Node $NodeName {
     LocalConfigurationManager
 		{
 			ConfigurationMode = 'ApplyAndAutoCorrect'
 			RebootNodeIfNeeded = $true
 			ActionAfterReboot = 'ContinueConfiguration'
-			AllowModuleOverwrite = $true
+            AllowModuleOverwrite = $true
+            DebugMode = "All"
 		}
-        
-        WindowsFeature Frameowork_4.5
-		{ 
-			Ensure = "Present" 
-			Name = "AS-NET-Framework"
-		}
+        WindowsFeatureSet Framework
+        {
+            Name                    = @("AS-NET-Framework", "NET-Framework-Features")
+            Ensure                  = 'Present'
+            IncludeAllSubFeature    = $true
+        } 
 
-		WindowsFeature Framework_3.5
-		{ 
-			Ensure = 'Present' 
-			Name = 'NET-Framework-Features' 
-		} 
+    
 
 
 
@@ -102,95 +90,88 @@ Node $NodeName {
 			DependsOn = '[WaitforDisk]Wait_Data_Disk'
 		}
 
+        File SQL_CD
+        {   #copy SQL Iso from Azure Files
+            DestinationPath = "F:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso"
+            Checksum =  "ModifiedDate"
+            Credential = $DriveCredentials
+            Ensure =  "Present"
+            DependsOn = "[Disk]Data_Disk"
+            SourcePath = "\\101filepoc.file.core.windows.net\iso\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso"
+            Type =  "File"
+        }
+        Script Mount_SQL_CD
+        {
+            GetScript = {
+                $result = $null
+                return @{
+                    $result = Get-Volume |Where-Object {$_.FileSystemLabel -eq "SQL2014_x64_ENU"}
+                }
+            }
+            SetScript =   {
+                $setupDriveLetter = (Mount-DiskImage -ImagePath F:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -PassThru | Get-Volume).DriveLetter
+                Write-Verbose "Mounted SQL CD with Letter $($setupdriveletter)"
+                get-volume -DriveLetter $setupDriveLetter
+                #New-Item -Type SymbolicLink -Path  "$($setupDriveLetter):\" -Value $using:SQLSourceFolder -ErrorAction stop | out-null 
+            }
+            TestScript = {
+                
+                if (!(test-path "G:\") )
+                {
+                    return $false
+                }
+                else
+                {
+                    return $true
+                }
+            }
+            DependsOn = '[File]SQL_CD'
+
+        }
+       
+
+        SqlSetup InstallNamedInstance_INST2014
+        {
+
+            Action                = 'Install'
+            InstanceName          = 'MSSQLSERVER'
+            Features              = 'SQLENGINE,FULLTEXT,RS,SSMS,ADV_SSMS'
+            SQLCollation          = 'SQL_Latin1_General_CP1_CI_AS'
+            SQLSvcAccount         = $SQLServerAccountCredentials
+            AgtSvcAccount         = $SqlAgentServiceCredential
+            RSSvcAccount          = $SQLRSAccountCredentials
+            SQLSysAdminAccounts   = "$($Env:COMPUTERNAME)\Administrators"
+            InstallSharedDir      = 'C:\Program Files\Microsoft SQL Server'
+            InstallSharedWOWDir   = 'C:\Program Files (x86)\Microsoft SQL Server'
+            InstanceDir           = 'C:\Program Files\Microsoft SQL Server'
+            InstallSQLDataDir     = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Data'
+            SQLUserDBDir          = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Data'
+            SQLUserDBLogDir       = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Data'
+            SQLTempDBDir          = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Data'
+            SQLTempDBLogDir       = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Data'
+            SQLBackupDir          = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Backup'
+            SourcePath            = "G:\"
+            UpdateEnabled         = 'True'
+            UpdateSource          = 'MU'
+            ForceReboot           = $false
+            BrowserSvcStartupType = 'Automatic'
+            #PsDscRunAsCredential  = $SqlInstallCredential
+            DependsOn             = '[WindowsFeatureSet]Framework','[Script]Mount_SQL_CD'
+
         
-        
-        SqlServiceAccount SetServiceAccount
-        {
-            ServerName     = "sql2014sccm"
-            InstanceName   = 'MSSQLSERVER'
-            ServiceType    = 'DatabaseEngine'
-            ServiceAccount = $SQLServerAccountCredentials
-            RestartService = $true
         }
 
-        SqlServiceAccount SetRSAccount
+        SqlRS DefaultConfiguration
+
         {
-            ServerName     = "sql2014sccm"
-            InstanceName   = 'MSSQLSERVER'
-            ServiceType    = 'ReportingServices'
-            ServiceAccount = $SQLRSAccountCredentials
-            RestartService = $true
+
+            InstanceName         = 'MSSQLSERVER'
+            DatabaseServerName   = 'localhost'
+            DatabaseInstanceName = 'MSSQLSERVER'
+            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
+
         }
 
-        SqlServiceAccount SetAgentAccount
-        {
-            ServerName     = "sql2014sccm"
-            InstanceName   = 'MSSQLSERVER'
-            ServiceType    = 'SQLServerAgent'
-            ServiceAccount = $SQLAgentAccountCredentials
-            
-        }
-
-        File CreateLogsDirectory
-        {
-           DestinationPath = "F:\Logs"
-           Ensure = "Present"
-           Type = "Directory"
-           DependsOn = "[Disk]Data_Disk"
-        }
-        
-        File CreateDBDirectory
-        {
-           DestinationPath = "F:\Data"
-           Ensure = "Present"
-           Type = "Directory"
-           DependsOn = "[Disk]Data_Disk"
-        }
-        File CreateBackupDirectory
-        {
-           DestinationPath = "F:\Backup"
-           Ensure = "Present"
-           Type = "Directory"
-           DependsOn = "[Disk]Data_Disk"
-        }
-        
-    SqlDatabaseDefaultLocation SetLogLocation
-
-    {
-            ServerName     = "sql2014sccm"
-            InstanceName   = 'MSSQLSERVER'
-            Type = "Log"
-            Path = "F:\Logs"
-            RestartService = $true
-            DependsOn = '[File]CreateLogsDirectory'
-
-    }
-
-    SqlDatabaseDefaultLocation SetDBLocation
-
-    {
-            ServerName     = "sql2014sccm"
-            InstanceName   = 'MSSQLSERVER'
-            Type = "Data"
-            Path = "F:\Data"
-            RestartService = $true
-            DependsOn = '[File]CreateDBDirectory'
-
-
-    }
-
-    SqlDatabaseDefaultLocation SetBackupLocation
-
-    {
-            ServerName     = "sql2014sccm"
-            InstanceName   = 'MSSQLSERVER'
-            Type = "Backup"
-            Path = "F:\Backup"
-            RestartService = $true
-            DependsOn = '[File]CreateBackupDirectory'
-
-
-    }
 
     SqlServerMemory Set_SQLServerMinAndMaxMemory_ToAuto
         {
@@ -200,7 +181,16 @@ Node $NodeName {
             InstanceName         = 'MSSQLSERVER'
             MinMemory            = 8192
             PsDscRunAsCredential = $SqlAdministratorCredential
+            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
+        Group AddADUserToLocalAdminGroup {
+            GroupName='Administrators'
+            Ensure= 'Present'
+            MembersToInclude= "Contosoad\ConfigMgrAdmins"
+            Credential = $SQLServerAccountCredentials
+            #PsDscRunAsCredential = $DCredential
+        }
+        
 
 
     
@@ -210,9 +200,9 @@ Node $NodeName {
         
 
 
+    }
 }
-}
-ConfigurationSQL -Nodename sql2014sccm.eastus2.cloudapp.azure.com -ConfigurationData $MyData
+ConfigurationSQL -Nodename sql2014sccm.eastus2.cloudapp.azure.com -ConfigurationData $MyData -Outputpath c:\os\temp\testdsc
 
 <#$sqlinstance = "MSSQLSERVER"
 $sqlFQDN = "SQL2014SCCM.contosoad.com"
