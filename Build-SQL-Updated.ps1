@@ -26,8 +26,7 @@ Configuration ConfigurationSQL
 		[string]$NodeName = 'localhost',
 		[PSCredential]$DriveCredentials,
         [PSCredential]$DomainCredentials,        
-		[string]$DomainName,
-		[array]$DNSSearchSuffix,
+		[string]$DataDriveLetter = "F"		
         [string]$SQLSourceFolder  = "C:\SQLCD"
 
 	)
@@ -54,6 +53,7 @@ $SQLRSAccountCredentials = New-Object System.Management.Automation.PSCredential 
 Import-DscResource -ModuleName SQLServerDSC
 Import-DscResource -ModuleName StorageDSC
 Import-DscResource -Module PSDscResources -ModuleVersion 2.8.0.0
+Import-DscResource -ModuleName xTimeZone
 Node $NodeName {
     LocalConfigurationManager
 		{
@@ -62,7 +62,15 @@ Node $NodeName {
 			ActionAfterReboot = 'ContinueConfiguration'
             AllowModuleOverwrite = $true
             DebugMode = "All"
-		}
+        }
+        
+        xTimeZone TimeZoneEastern
+
+        {
+			isSingleInstance = 'Yes'
+            TimeZone = 'Eastern Standard Time'
+
+        }
         WindowsFeatureSet Framework
         {
             Name                    = @("AS-NET-Framework", "NET-Framework-Features")
@@ -85,7 +93,7 @@ Node $NodeName {
 		Disk Data_Disk
 		{
 			DiskId = "2"
-			DriveLetter = "F"
+			DriveLetter = $DataDriveLette
 			AllocationUnitSize = 4096
 			DependsOn = '[WaitforDisk]Wait_Data_Disk'
 		}
@@ -111,12 +119,12 @@ Node $NodeName {
             SetScript =   {
                 $setupDriveLetter = (Mount-DiskImage -ImagePath F:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -PassThru | Get-Volume).DriveLetter
                 Write-Verbose "Mounted SQL CD with Letter $($setupdriveletter)"
-                get-volume -DriveLetter $setupDriveLetter
-                #New-Item -Type SymbolicLink -Path  "$($setupDriveLetter):\" -Value $using:SQLSourceFolder -ErrorAction stop | out-null 
+                
             }
             TestScript = {
-                
-                if (!(test-path "G:\") )
+                $driveletter = $null
+                $driveletter = (Get-Volume |Where-Object {$_.FileSystemLabel -eq "SQL2014_x64_ENU"}).DriveLetter
+                if ($driveletter -eq $null )
                 {
                     return $false
                 }
@@ -126,6 +134,21 @@ Node $NodeName {
                 }
             }
             DependsOn = '[File]SQL_CD'
+
+        }
+
+        Script Create_Folder_Link
+        {
+            GetScript = {return @{"result"="useless"}}
+            SetScript = {
+
+                $driveletter = (Get-Volume |Where-Object {$_.FileSystemLabel -eq "SQL2014_x64_ENU"}).DriveLetter
+                New-Item -ItemType SymbolicLink -Path $using:SQLSourceFolder -Target "$($driveletter):\"
+            }
+            TestScript = {
+                return (test-path $using:SQLSourceFolder)
+                
+            }
 
         }
        
@@ -138,19 +161,19 @@ Node $NodeName {
             Features              = 'SQLENGINE,FULLTEXT,RS,SSMS,ADV_SSMS'
             SQLCollation          = 'SQL_Latin1_General_CP1_CI_AS'
             SQLSvcAccount         = $SQLServerAccountCredentials
-            AgtSvcAccount         = $SqlAgentServiceCredential
+            AgtSvcAccount         = $SQLAgentAccountCredentials
             RSSvcAccount          = $SQLRSAccountCredentials
-            SQLSysAdminAccounts   = "$($nodename)\Administrators"
-            InstallSharedDir      = 'C:\Program Files\Microsoft SQL Server'
+            SQLSysAdminAccounts   = ".\Administrators"
+            InstallSharedDir      = "C:\Program Files\Microsoft SQL Server"
             InstallSharedWOWDir   = 'C:\Program Files (x86)\Microsoft SQL Server'
             InstanceDir           = 'C:\Program Files\Microsoft SQL Server'
-            InstallSQLDataDir     = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Data'
-            SQLUserDBDir          = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Data'
-            SQLUserDBLogDir       = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Data'
-            SQLTempDBDir          = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Data'
-            SQLTempDBLogDir       = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Data'
-            SQLBackupDir          = 'C:\Program Files\Microsoft SQL Server\MSSQL13.INST2016\MSSQL\Backup'
-            SourcePath            = "G:\"
+            InstallSQLDataDir     = "$$DataDriveLetter\Data"
+            SQLUserDBDir          = "$($DataDriveLetter)\Data"
+            SQLUserDBLogDir       = "$($DataDriveLetter)\Data"
+            SQLTempDBDir          = "$($DataDriveLetter)\Data"
+            SQLTempDBLogDir       = "$($DataDriveLetter)\Data"
+            SQLBackupDir          = "$($DataDriveLetter)\Backup"
+            SourcePath            = $SQLSourceFolder
             UpdateEnabled         = 'True'
             UpdateSource          = 'MU'
             ForceReboot           = $false
@@ -183,6 +206,7 @@ Node $NodeName {
             PsDscRunAsCredential = $SqlAdministratorCredential
             DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
+
         Group AddADUserToLocalAdminGroup {
             GroupName='Administrators'
             Ensure= 'Present'
@@ -192,6 +216,23 @@ Node $NodeName {
         }
         
 
+        SqlDatabaseRecoveryModel Set_SqlDatabaseRecoveryModel_ReportsServer
+        {
+            Name                 = 'ReportServer'
+            RecoveryModel        = 'Simple'
+            ServerName           = 'localhost'
+            InstanceName         = 'MSSQLSERVER'
+            #PsDscRunAsCredential = $SqlAdministratorCredential
+        }
+
+        SqlDatabaseRecoveryModel Set_SqlDatabaseRecoveryModel_ReportServerTempDB
+        {
+            Name                 = 'ReportServerTempDB'
+            RecoveryModel        = 'Full'
+            ServerName           = 'localhost'
+            InstanceName         = 'MSSQLSERVER'
+            #PsDscRunAsCredential = $SqlAdministratorCredential
+        }
 
     
         
