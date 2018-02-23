@@ -93,7 +93,7 @@ Node $NodeName {
 		Disk Data_Disk
 		{
 			DiskId = "2"
-			DriveLetter = $DataDriveLette
+			DriveLetter = $DataDriveLetter
 			AllocationUnitSize = 4096
 			DependsOn = '[WaitforDisk]Wait_Data_Disk'
 		}
@@ -123,7 +123,7 @@ Node $NodeName {
             }
             TestScript = {
                 $driveletter = $null
-                $driveletter = (Get-Volume |Where-Object {$_.FileSystemLabel -eq "SQL2014_x64_ENU"}).DriveLetter
+                $driveletter = Get-Volume -ErrorAction SilentlyContinue |Where-Object {$_.FileSystemLabel -eq "SQL2014_x64_ENU"}
                 if ($driveletter -eq $null )
                 {
                     return $false
@@ -149,7 +149,7 @@ Node $NodeName {
                 return (test-path $using:SQLSourceFolder)
                 
             }
-
+            DependsOn = '[Script]Mount_SQL_CD'
         }
        
 
@@ -179,7 +179,7 @@ Node $NodeName {
             ForceReboot           = $false
             BrowserSvcStartupType = 'Automatic'
             #PsDscRunAsCredential  = $SqlInstallCredential
-            DependsOn             = '[WindowsFeatureSet]Framework','[Script]Mount_SQL_CD'
+            DependsOn             = '[WindowsFeatureSet]Framework','[Script]Create_Folder_Link'
 
         
         }
@@ -223,6 +223,7 @@ Node $NodeName {
             ServerName           = 'localhost'
             InstanceName         = 'MSSQLSERVER'
             #PsDscRunAsCredential = $SqlAdministratorCredential
+            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
 
         SqlDatabaseRecoveryModel Set_SqlDatabaseRecoveryModel_ReportServerTempDB
@@ -232,6 +233,7 @@ Node $NodeName {
             ServerName           = 'localhost'
             InstanceName         = 'MSSQLSERVER'
             #PsDscRunAsCredential = $SqlAdministratorCredential
+            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
 
     
