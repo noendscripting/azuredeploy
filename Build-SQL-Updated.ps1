@@ -140,7 +140,7 @@ Node $NodeName {
             SQLSvcAccount         = $SQLServerAccountCredentials
             AgtSvcAccount         = $SqlAgentServiceCredential
             RSSvcAccount          = $SQLRSAccountCredentials
-            SQLSysAdminAccounts   = "$($Env:COMPUTERNAME)\Administrators"
+            SQLSysAdminAccounts   = "$($nodename)\Administrators"
             InstallSharedDir      = 'C:\Program Files\Microsoft SQL Server'
             InstallSharedWOWDir   = 'C:\Program Files (x86)\Microsoft SQL Server'
             InstanceDir           = 'C:\Program Files\Microsoft SQL Server'
