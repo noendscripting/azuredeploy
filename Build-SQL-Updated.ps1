@@ -26,7 +26,7 @@ Configuration ConfigurationSQL
 		[string]$NodeName = 'localhost',
 		[PSCredential]$DriveCredentials,
         [PSCredential]$DomainCredentials,        
-		[string]$DataDriveLetter = "F"		
+		[string]$DataDriveLetter = "F",		
         [string]$SQLSourceFolder  = "C:\SQLCD"
 
 	)
@@ -53,7 +53,7 @@ $SQLRSAccountCredentials = New-Object System.Management.Automation.PSCredential 
 Import-DscResource -ModuleName SQLServerDSC
 Import-DscResource -ModuleName StorageDSC
 Import-DscResource -Module PSDscResources -ModuleVersion 2.8.0.0
-Import-DscResource -ModuleName xTimeZone
+Import-DscResource -ModuleName xTimeZone -ModuleVersion 1.7.0.0
 Node $NodeName {
     LocalConfigurationManager
 		{
