@@ -1,17 +1,17 @@
 ﻿
 
-$MyData = 
+$MyData =
 @{
     AllNodes = @(
-    
+
     @{
             NodeName="sql2014sccm.eastus2.cloudapp.azure.com"
-			RetryCount = 20  
-            RetryIntervalSec = 30  
+			RetryCount = 20
+            RetryIntervalSec = 30
             PSDscAllowPlainTextPassword=$true
 			PSDscAllowDomainUser = $true
          }
-    
+
     )
  }
 
@@ -25,28 +25,28 @@ Configuration ConfigurationSQL
 	(
 		[string]$NodeName = 'localhost',
 		[PSCredential]$DriveCredentials,
-        [PSCredential]$DomainCredentials,        
-		[string]$DataDriveLetter = "F",		
+        [PSCredential]$DomainCredentials,
+		[string]$DataDriveLetter = "F",
         [string]$SQLSourceFolder  = "C:\SQLCD"
 
 	)
 
 
 $PlainPassword = "1hfxLwbLsT4PbE4JztmeLOm+4I6eEmPMUnlgB0x4tHTN6qMQ4Hdb56oNLZuKIhOnm+uf8lbDMBXl7QdxtSPj/Q=="
-$SecurePassword = $PlainPassword | ConvertTo-SecureString -AsPlainText -Force 
+$SecurePassword = $PlainPassword | ConvertTo-SecureString -AsPlainText -Force
 $UserName = "101filepoc"
-$DriveCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $SecurePassword  
+$DriveCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $SecurePassword
 
 
-$SQLServerDomainPassword = ConvertTo-SecureString -AsPlainText -Force "P2ssw0rd" 
+$SQLServerDomainPassword = ConvertTo-SecureString -AsPlainText -Force "P2ssw0rd"
 $SQLServerAccountuser = "Contosoad\cmSQLsvc"
-$SQLServerAccountCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $SQLServerAccountuser , $SQLServerDomainPassword  
+$SQLServerAccountCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $SQLServerAccountuser , $SQLServerDomainPassword
 
 $SQLAgentAccountuser = "Contosoad\cmSQLAgent"
-$SQLAgentAccountCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $SQLAgentAccountuser , $SQLServerDomainPassword  
+$SQLAgentAccountCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $SQLAgentAccountuser , $SQLServerDomainPassword
 
 $SQLRSAccountuser = "Contosoad\cmRSPacct"
-$SQLRSAccountCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $SQLRSAccountuser , $SQLServerDomainPassword  
+$SQLRSAccountCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $SQLRSAccountuser , $SQLServerDomainPassword
 
 
 
@@ -63,7 +63,7 @@ Node $NodeName {
             AllowModuleOverwrite = $true
             DebugMode = "All"
         }
-        
+
         xTimeZone TimeZoneEastern
 
         {
@@ -71,14 +71,14 @@ Node $NodeName {
             TimeZone = 'Eastern Standard Time'
 
         }
-        WindowsFeatureSet Framework
+        <#WindowsFeatureSet Framework
         {
             Name                    = @("AS-NET-Framework", "NET-Framework-Features")
             Ensure                  = 'Present'
             IncludeAllSubFeature    = $true
-        } 
+        }#>
 
-    
+
 
 
 
@@ -87,7 +87,7 @@ Node $NodeName {
 			DiskId = "2"
 			RetryCount = 3
 			RetryIntervalSec = 30
-			
+
 		}
 
 		Disk Data_Disk
@@ -119,7 +119,7 @@ Node $NodeName {
             SetScript =   {
                 $setupDriveLetter = (Mount-DiskImage -ImagePath F:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -PassThru | Get-Volume).DriveLetter
                 Write-Verbose "Mounted SQL CD with Letter $($setupdriveletter)"
-                
+
             }
             TestScript = {
                 $driveletter = $null
@@ -143,17 +143,33 @@ Node $NodeName {
             SetScript = {
 
                 $driveletter = (Get-Volume |Where-Object {$_.FileSystemLabel -eq "SQL2014_x64_ENU"}).DriveLetter
+                $timeout = new-timespan -Minutes 5
+                $stopwatchStart = [diagnostics.stopwatch]::StartNew()
+
+                Do{
+                    Start-Sleep -Seconds 15
+                    $terminate = test-path "$($driveletter):\"
+                    if ($stopwatchStart -eq $timeout)
+                    {
+
+                        write-verbose "Terminated test drive loop due to time out $($timeout)"
+                        throw ("Can not find drive $($driveletter)")
+                        exit
+                    }
+                    Write-Verbose "Drive $($driveletter) not availble $($stopwatchStart.Elapsed.Minutes):$($stopwatchStart.Elapsed.Seconds)"
+                }
+                Until ($terminate -eq $true)
                 New-Item -ItemType SymbolicLink -Path $using:SQLSourceFolder -Target "$($driveletter):\"
             }
             TestScript = {
                 return (test-path $using:SQLSourceFolder)
-                
+
             }
             DependsOn = '[Script]Mount_SQL_CD'
         }
-       
 
-        SqlSetup InstallNamedInstance_INST2014
+
+       <# SqlSetup InstallNamedInstance_INST2014
         {
 
             Action                = 'Install'
@@ -181,31 +197,23 @@ Node $NodeName {
             #PsDscRunAsCredential  = $SqlInstallCredential
             DependsOn             = '[WindowsFeatureSet]Framework','[Script]Create_Folder_Link'
 
-        
-        }
+
+        }#>
 
         SqlRS DefaultConfiguration
 
         {
 
             InstanceName         = 'MSSQLSERVER'
-            DatabaseServerName   = 'localhost'
+            DatabaseServerName   = 'sql2014sccm'
             DatabaseInstanceName = 'MSSQLSERVER'
-            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
+
+           #DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
 
         }
 
 
-    SqlServerMemory Set_SQLServerMinAndMaxMemory_ToAuto
-        {
-            Ensure               = 'Present'
-            DynamicAlloc         = $true
-            ServerName           = 'sql2014sccm'
-            InstanceName         = 'MSSQLSERVER'
-            MinMemory            = 8192
-            PsDscRunAsCredential = $SqlAdministratorCredential
-            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
-        }
+
 
         Group AddADUserToLocalAdminGroup {
             GroupName='Administrators'
@@ -214,7 +222,7 @@ Node $NodeName {
             Credential = $SQLServerAccountCredentials
             #PsDscRunAsCredential = $DCredential
         }
-        
+
 
         SqlDatabaseRecoveryModel Set_SqlDatabaseRecoveryModel_ReportsServer
         {
@@ -223,7 +231,7 @@ Node $NodeName {
             ServerName           = 'localhost'
             InstanceName         = 'MSSQLSERVER'
             #PsDscRunAsCredential = $SqlAdministratorCredential
-            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
+            #DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
 
         SqlDatabaseRecoveryModel Set_SqlDatabaseRecoveryModel_ReportServerTempDB
@@ -233,14 +241,14 @@ Node $NodeName {
             ServerName           = 'localhost'
             InstanceName         = 'MSSQLSERVER'
             #PsDscRunAsCredential = $SqlAdministratorCredential
-            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
+            #DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
 
-    
-        
-                      
 
-        
+
+
+
+
 
 
     }
