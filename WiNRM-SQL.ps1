@@ -30,7 +30,7 @@ $UserName = "101filepoc"
 $DriveCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $SecurePassword
 New-PSDrive -Name "SQLDISK" -PSProvider FileSystem -Root "\\101filepoc.file.core.windows.net\iso" -Credential $DriveCredentials
 
-Copy-Item -Path \\101filepoc.file.core.windows.net\iso\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -Destination d:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -PassThru
+copy-item -Path SQLDISK:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -Destination D:\ -PassThru
 Remove-PSDrive -Name "SQLDISK"
 $setupDriveLetter = (Mount-DiskImage -ImagePath D:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -PassThru | Get-Volume).DriveLetter
 
