@@ -71,12 +71,12 @@ Node $NodeName {
             TimeZone = 'Eastern Standard Time'
 
         }
-        <#WindowsFeatureSet Framework
+        WindowsFeatureSet Framework
         {
             Name                    = @("AS-NET-Framework", "NET-Framework-Features")
             Ensure                  = 'Present'
             IncludeAllSubFeature    = $true
-        }#>
+        }
 
 
 
@@ -98,7 +98,7 @@ Node $NodeName {
 			DependsOn = '[WaitforDisk]Wait_Data_Disk'
 		}
 
-        File SQL_CD
+        <#File SQL_CD
         {   #copy SQL Iso from Azure Files
             DestinationPath = "F:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso"
             Checksum =  "ModifiedDate"
@@ -135,9 +135,9 @@ Node $NodeName {
             }
             DependsOn = '[File]SQL_CD'
 
-        }
+        }#>
 
-        Script Create_Folder_Link
+        <#Script Create_Folder_Link
         {
             GetScript = {return @{"result"="useless"}}
             SetScript = {
@@ -166,10 +166,10 @@ Node $NodeName {
 
             }
             DependsOn = '[Script]Mount_SQL_CD'
-        }
+        }#>
 
 
-       <# SqlSetup InstallNamedInstance_INST2014
+        SqlSetup InstallNamedInstance_INST2014
         {
 
             Action                = 'Install'
@@ -195,10 +195,10 @@ Node $NodeName {
             ForceReboot           = $false
             BrowserSvcStartupType = 'Automatic'
             #PsDscRunAsCredential  = $SqlInstallCredential
-            DependsOn             = '[WindowsFeatureSet]Framework','[Script]Create_Folder_Link'
+            DependsOn             = '[WindowsFeatureSet]Framework','[WaitforDisk]Wait_Data_Disk'
 
 
-        }#>
+        }
 
         SqlRS DefaultConfiguration
 
@@ -207,8 +207,7 @@ Node $NodeName {
             InstanceName         = 'MSSQLSERVER'
             DatabaseServerName   = 'sql2014sccm'
             DatabaseInstanceName = 'MSSQLSERVER'
-
-           #DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
+            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
 
         }
 
@@ -221,6 +220,7 @@ Node $NodeName {
             MembersToInclude= "Contosoad\ConfigMgrAdmins"
             Credential = $SQLServerAccountCredentials
             #PsDscRunAsCredential = $DCredential
+            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
 
 
@@ -231,7 +231,7 @@ Node $NodeName {
             ServerName           = 'localhost'
             InstanceName         = 'MSSQLSERVER'
             #PsDscRunAsCredential = $SqlAdministratorCredential
-            #DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
+            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
 
         SqlDatabaseRecoveryModel Set_SqlDatabaseRecoveryModel_ReportServerTempDB
@@ -241,7 +241,7 @@ Node $NodeName {
             ServerName           = 'localhost'
             InstanceName         = 'MSSQLSERVER'
             #PsDscRunAsCredential = $SqlAdministratorCredential
-            #DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
+            DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
 
 
