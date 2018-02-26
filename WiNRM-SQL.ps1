@@ -28,10 +28,10 @@ $PlainPassword = "1hfxLwbLsT4PbE4JztmeLOm+4I6eEmPMUnlgB0x4tHTN6qMQ4Hdb56oNLZuKIh
 $SecurePassword = $PlainPassword | ConvertTo-SecureString -AsPlainText -Force
 $UserName = "101filepoc"
 $DriveCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $SecurePassword
-New-PSDrive -Name "SQLCD" -PSProvider FileSystem -Root "\\101filepoc.file.core.windows.net\iso" -Credential $DriveCredentials
+New-PSDrive -Name "SQLDISK" -PSProvider FileSystem -Root "\\101filepoc.file.core.windows.net\iso" -Credential $DriveCredentials
 
 Copy-Item -Path \\101filepoc.file.core.windows.net\iso\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -Destination d:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -PassThru
 $setupDriveLetter = (Mount-DiskImage -ImagePath D:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -PassThru | Get-Volume).DriveLetter
 
-New-Item C:\SQLCD -ItemType Directory
+New-Item C:\SQLCD -ItemType Directory -Force
 Copy-Item "$($setupDriveLetter):\*" -Recurse -Destination C:\SQLDISK -Verbose -ErrorAction Stop
