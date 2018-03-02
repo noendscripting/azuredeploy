@@ -1,6 +1,6 @@
 ﻿
 
-$MyData =
+<#$MyData =
 @{
     AllNodes = @(
 
@@ -13,7 +13,9 @@ $MyData =
          }
 
     )
- }
+ }#>
+
+
 
 
 
@@ -24,8 +26,8 @@ Configuration ConfigurationSQL
 	Param
 	(
 		[string]$NodeName = 'localhost',
-		[PSCredential]$DriveCredentials,
-        [PSCredential]$DomainCredentials,
+		#[PSCredential]$DriveCredentials,
+        #[PSCredential]$DomainCredentials,
 		[string]$DataDriveLetter = "F",
         [string]$SQLSourceFolder  = "C:\SQLCD"
 
@@ -98,75 +100,6 @@ Node $NodeName {
 			DependsOn = '[WaitforDisk]Wait_Data_Disk'
 		}
 
-        <#File SQL_CD
-        {   #copy SQL Iso from Azure Files
-            DestinationPath = "F:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso"
-            Checksum =  "ModifiedDate"
-            Credential = $DriveCredentials
-            Ensure =  "Present"
-            DependsOn = "[Disk]Data_Disk"
-            SourcePath = "\\101filepoc.file.core.windows.net\iso\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso"
-            Type =  "File"
-        }
-        Script Mount_SQL_CD
-        {
-            GetScript = {
-                $result = $null
-                return @{
-                    $result = Get-Volume |Where-Object {$_.FileSystemLabel -eq "SQL2014_x64_ENU"}
-                }
-            }
-            SetScript =   {
-                $setupDriveLetter = (Mount-DiskImage -ImagePath F:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -PassThru | Get-Volume).DriveLetter
-                Write-Verbose "Mounted SQL CD with Letter $($setupdriveletter)"
-
-            }
-            TestScript = {
-                $driveletter = $null
-                $driveletter = Get-Volume -ErrorAction SilentlyContinue |Where-Object {$_.FileSystemLabel -eq "SQL2014_x64_ENU"}
-                if ($driveletter -eq $null )
-                {
-                    return $false
-                }
-                else
-                {
-                    return $true
-                }
-            }
-            DependsOn = '[File]SQL_CD'
-
-        }#>
-
-        <#Script Create_Folder_Link
-        {
-            GetScript = {return @{"result"="useless"}}
-            SetScript = {
-
-                $driveletter = (Get-Volume |Where-Object {$_.FileSystemLabel -eq "SQL2014_x64_ENU"}).DriveLetter
-                $timeout = new-timespan -Minutes 5
-                $stopwatchStart = [diagnostics.stopwatch]::StartNew()
-
-                Do{
-                    Start-Sleep -Seconds 15
-                    $terminate = test-path "$($driveletter):\"
-                    if ($stopwatchStart -eq $timeout)
-                    {
-
-                        write-verbose "Terminated test drive loop due to time out $($timeout)"
-                        throw ("Can not find drive $($driveletter)")
-                        exit
-                    }
-                    Write-Verbose "Drive $($driveletter) not availble $($stopwatchStart.Elapsed.Minutes):$($stopwatchStart.Elapsed.Seconds)"
-                }
-                Until ($terminate -eq $true)
-                New-Item -ItemType SymbolicLink -Path $using:SQLSourceFolder -Target "$($driveletter):\"
-            }
-            TestScript = {
-                return (test-path $using:SQLSourceFolder)
-
-            }
-            DependsOn = '[Script]Mount_SQL_CD'
-        }#>
 
 
         SqlSetup InstallNamedInstance_INST2014
@@ -196,7 +129,6 @@ Node $NodeName {
             BrowserSvcStartupType = 'Automatic'
             #PsDscRunAsCredential  = $SqlInstallCredential
             DependsOn             = '[WindowsFeatureSet]Framework','[WaitforDisk]Wait_Data_Disk'
-
 
         }
 
@@ -253,18 +185,8 @@ Node $NodeName {
 
     }
 }
-ConfigurationSQL -Nodename sql2014sccm.eastus2.cloudapp.azure.com -ConfigurationData $MyData -Outputpath c:\os\temp\testdsc
+#ConfigurationSQL -Nodename sql2014sccm.eastus2.cloudapp.azure.com -ConfigurationData $MyData -Outputpath c:\os\temp\testdsc
 
-<#$sqlinstance = "MSSQLSERVER"
-$sqlFQDN = "SQL2014SCCM.contosoad.com"
-$usernames = @("cmRSPacct","cmSQLAgent","cmSQLsvc")
-$usernames | %{New-ADUser -AccountPassword (ConvertTo-SecureString -AsPlainText -Force "P2ssw0rd" ) -ChangePasswordAtLogon $false -Description "Config Manager Account" -Name $_ -DisplayName $_ -SamAccountName $_  -Enabled $true}
-New-ADGroup ConfigMgrAdmins -DisplayName "Config Manager Administrators" -GroupCategory Security -GroupScope Global -samaccountname ConfigMgrAdmins
-New-ADGroup ConfigMgrOperators -DisplayName "Config Manager Operators" -GroupCategory Security -GroupScope Global -samaccountname ConfigMgrOps
-New-ADGroup ConfigMgrSecurityAdmins -DisplayName "Config Manager Security Administrators" -GroupCategory Security -GroupScope Global -samaccountname ConfigMgrsecAdmin
-Start-Sleep -Seconds 5
-get-aduser $usernames[2] | Set-ADUser -ServicePrincipalNames @{Add="MSSQLSERVER/$($sqlFQDN):1433","MSSQLSERVER/$($sqlFQDN.Split(".")[0]):1433"}
-([ADSI]("WinNT://$($sqlFQDN.Split(".")[0])/administrators,group")).Add("WinNT://contosoad/ConfigMgrAdmins,group")#>
 
 
 
