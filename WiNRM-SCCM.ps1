@@ -25,8 +25,11 @@ New-NetFirewallRule -DisplayName "Windows Remote Management (HTTPS-In)" -Name "W
 Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
 
 Invoke-WebRequest -Uri http://go.microsoft.com/fwlink/p/?LinkId=526740 -OutFile "$($PWD)\adk10.exe"
+$sdkCMD = "$($PWD)\Adksetup.exe"
+$sdkArgs = "/quiet /promptrestart /features optionid.deploymenttools optionid.windowspreinstallationenvironment optionid.userstatemigrationtool"
+Start-Process -FilePath $sdkCMD -ArgumentList $sdkArgs -NoNewWindow -Wait
 
-$PlainPassword = "1hfxLwbLsT4PbE4JztmeLOm+4I6eEmPMUnlgB0x4tHTN6qMQ4Hdb56oNLZuKIhOnm+uf8lbDMBXl7QdxtSPj/Q=="
+<#$PlainPassword = "1hfxLwbLsT4PbE4JztmeLOm+4I6eEmPMUnlgB0x4tHTN6qMQ4Hdb56oNLZuKIhOnm+uf8lbDMBXl7QdxtSPj/Q=="
 $SecurePassword = $PlainPassword | ConvertTo-SecureString -AsPlainText -Force
 $UserName = "101filepoc"
 $DriveCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $SecurePassword
@@ -36,5 +39,5 @@ copy-item -Path SQLDISK:\mu_system_center_configuration_manager_endpoint_protect
 Remove-PSDrive -Name "SCCMDISK"
 $setupDriveLetter = (Mount-DiskImage -ImagePath D:\mu_system_center_configuration_manager_endpoint_protection_version_1606_x86_x64_dvd_9678361.iso -PassThru | Get-Volume).DriveLetter
 
-New-Item C:\SQLCD -ItemType Directory -Force
-Copy-Item "$($setupDriveLetter):\*" -Recurse -Destination C:\SCCMCD -Verbose -ErrorAction Stop
+New-Item C:\SCCMCD -ItemType Directory -Force
+Copy-Item "$($setupDriveLetter):\*" -Recurse -Destination C:\SCCMCD -Verbose -ErrorAction Stop#>
