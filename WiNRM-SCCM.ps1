@@ -4,7 +4,7 @@
 #Verify if PowerShellGet module is installed. If not install
 if (!(Get-Module -Name PowerShellGet))
 {
-    Invoke-WebRequest 'https://download.microsoft.com/download/C/4/1/C41378D4-7F41-4BBE-9D0D-0E4F98585C61/PackageManagement_x64.msi' -OutFile "$($PWD)\PackageManagement_x64.msi"
+    Invoke-WebRequest 'http://packagesource.contosoad.com/downloads/PackageManagement_x64.msi' -OutFile "$($PWD)\PackageManagement_x64.msi"
     Start-Process "$($PWD)\PackageManagement_x64.msi" -ArgumentList "/qn" -Wait
   }
 
@@ -13,9 +13,12 @@ if (!(Get-Module -Name PowerShellGet))
 
 
 Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources,xWebAdministration,xWindowsUpdate -Scope AllUsers -Confirm:$false -Force
-Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=839516" -OutFile "$($PWD)\wmf5.1.msu"
+#Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+Register-PSRepository -Name "Internal" -SourceLocation http://packagesource.contosoad.com/nuget -InstallationPolicy Trusted
+Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources,xWebAdministration,xWindowsUpdate -Scope AllUsers -Confirm:$false -Force -Repository "Internal"
+#Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=839516" -OutFile "$($PWD)\wmf5.1.msu"
+Invoke-WebRequest -Uri "http://packagesource.contosoad.com/downloads/wmf5.1.msu" -OutFile "$($PWD)\wmf5.1.msu"
+
 Start-Process -FilePath 'wusa.exe' -ArgumentList "$($PWD)\wmf5.1.msu /quiet /noreboot" -NoNewWindow -Wait#>
 
 $Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName $env:COMPUTERNAME
@@ -24,10 +27,10 @@ New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -Certificat
 New-NetFirewallRule -DisplayName "Windows Remote Management (HTTPS-In)" -Name "Windows Remote Management (HTTPS-In)" -Profile Any -LocalPort 5986 -Protocol TCP
 Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
 
-Invoke-WebRequest -Uri http://go.microsoft.com/fwlink/p/?LinkId=526740 -OutFile "$($PWD)\adk10.exe"
+<#Invoke-WebRequest -Uri http://go.microsoft.com/fwlink/p/?LinkId=526740 -OutFile "$($PWD)\adk10.exe"
 $sdkCMD = "$($PWD)\adk10.exe"
 $sdkArgs = "/quiet /promptrestart /features optionid.deploymenttools optionid.windowspreinstallationenvironment optionid.userstatemigrationtool"
-Start-Process -FilePath $sdkCMD -ArgumentList $sdkArgs -NoNewWindow -Wait
+Start-Process -FilePath $sdkCMD -ArgumentList $sdkArgs -NoNewWindow -Wait#>
 
 <#$PlainPassword = "1hfxLwbLsT4PbE4JztmeLOm+4I6eEmPMUnlgB0x4tHTN6qMQ4Hdb56oNLZuKIhOnm+uf8lbDMBXl7QdxtSPj/Q=="
 $SecurePassword = $PlainPassword | ConvertTo-SecureString -AsPlainText -Force

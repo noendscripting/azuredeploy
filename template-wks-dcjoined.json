@@ -136,7 +136,7 @@
             "settings": {
               "Name": "[parameters('Domain')]",
               "User": "[concat(parameters('Domain'), '\\', parameters('AdminUserName'))]",
-              "OUPath": "OU=Company Computers,DC=Nibroso,DC=com",
+              "OUPath": "OU=Company Computers,DC=contosoad,DC=com",
               "Restart": "true",
               "Options": 3
             },
