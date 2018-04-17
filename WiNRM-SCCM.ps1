@@ -19,7 +19,7 @@ Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources,xWebAdmini
 #Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=839516" -OutFile "$($PWD)\wmf5.1.msu"
 Invoke-WebRequest -Uri "http://packagesource.contosoad.com/downloads/wmf5.1.msu" -OutFile "$($PWD)\wmf5.1.msu"
 
-Start-Process -FilePath 'wusa.exe' -ArgumentList "$($PWD)\wmf5.1.msu /quiet /noreboot" -NoNewWindow -Wait#>
+Start-Process -FilePath 'wusa.exe' -ArgumentList "$($PWD)\wmf5.1.msu /quiet /noreboot" -NoNewWindow -Wait
 
 $Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName $env:COMPUTERNAME
 Enable-PSRemoting -SkipNetworkProfileCheck -Force
