@@ -75,12 +75,12 @@ Configuration Configuration_CM
             Arguments = "/quiet /promptrestart /features optionid.deploymenttools optionid.windowspreinstallationenvironment optionid.userstatemigrationtool"
             ProductId = "39ebb79f-797c-418f-b329-97cfdf92b7ab"
         }
-        WindowsFeatureSet WSUS_InternalDB
+       <# WindowsFeatureSet WSUS_InternalDB
         {
             Name = "UpdateServices-Services,UpdateServices-WidDB,UpdateServices-Services,Windows-Internal-Database,UpdateServices-UI"
             IncludeAllSubFeature = $true
             Ensure = "Present"
-        }
+        }#>
     }
 }
 

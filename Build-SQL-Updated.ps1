@@ -1,6 +1,6 @@
 ﻿
 
-<#$MyData =
+$MyData =
 @{
     AllNodes = @(
 
@@ -13,7 +13,7 @@
          }
 
     )
- }#>
+ }
 
 
 
@@ -185,7 +185,7 @@ Node $NodeName {
 
     }
 }
-#ConfigurationSQL -Nodename sql2014sccm.eastus2.cloudapp.azure.com -ConfigurationData $MyData -Outputpath c:\os\temp\testdsc
+ConfigurationSQL -Nodename sql2014sccm.eastus2.cloudapp.azure.com -ConfigurationData $MyData -Outputpath c:\os\temp\testdsc
 
 
 
