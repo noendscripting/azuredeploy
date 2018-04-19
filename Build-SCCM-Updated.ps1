@@ -45,7 +45,7 @@ Configuration Configuration_CM
 
         WindowsFeatureSet AddAllFeatures
         {
-            Name                    = @("AS-NET-Framework", "NET-Framework-Features","net-framework-45-ASPNET","BITS","RDC","Web-WMI","web-asp-net","web-asp-net45","web-net-ext45","web-Windows-Auth","Web-Dyn-compression","web-Mgmt-console","net-http-activation","net-wcf-http-activation45","UpdateServices-RSAT", "RSAT-Bits-Server","UpdateServices-Services","UpdateServices-DB")
+            Name                    = @("AS-NET-Framework", "NET-Framework-Features","net-framework-45-ASPNET","BITS","RDC","Web-WMI","web-asp-net","web-asp-net45","web-net-ext45","web-Windows-Auth","Web-Dyn-compression","web-Mgmt-console","net-http-activation","net-wcf-http-activation45","UpdateServices-RSAT", "RSAT-Bits-Server")
             Ensure                  = 'Present'
             IncludeAllSubFeature    = $true
         }
@@ -74,6 +74,12 @@ Configuration Configuration_CM
             Name = "Windows Assessment and Deployment Kit - Windows 10"
             Arguments = "/quiet /promptrestart /features optionid.deploymenttools optionid.windowspreinstallationenvironment optionid.userstatemigrationtool"
             ProductId = "39ebb79f-797c-418f-b329-97cfdf92b7ab"
+        }
+        WindowsFeatureSet WSUS_InternalDB
+        {
+            Name = "UpdateServices-Services,UpdateServices-WidDB,UpdateServices-Services,Windows-Internal-Database,UpdateServices-UI"
+            IncludeAllSubFeature = $true
+            Ensure = "Present"
         }
     }
 }
