@@ -14,6 +14,7 @@ Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 Register-PSRepository -Name "Internal" -SourceLocation http://packagesource.contosoad.com/nuget -InstallationPolicy Trusted
 Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources,xWebAdministration,xWindowsUpdate -Scope AllUsers -Confirm:$false -Force -Repository "Internal"
 #Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=839516" -OutFile "$($PWD)\wmf5.1.msu"
+
 Invoke-WebRequest -Uri "http://packagesource.contosoad.com/downloads/wmf5.1.msu" -OutFile "$($PWD)\wmf5.1.msu"
 Start-Process -FilePath 'wusa.exe' -ArgumentList "$($PWD)\wmf5.1.msu /quiet /noreboot" -NoNewWindow -Wait
 
@@ -31,9 +32,18 @@ New-PSDrive -Name "SQLDISK" -PSProvider FileSystem -Root "\\101filepoc.file.core
 
 copy-item -Path SQLDISK:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -Destination D:\ -PassThru
 Remove-PSDrive -Name "SQLDISK"#>
-Invoke-WebRequest -Uri "http://packagesource.contosoad.com/downloads/en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso" -OutFile "D:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso"
-
-$setupDriveLetter = (Mount-DiskImage -ImagePath D:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -PassThru | Get-Volume).DriveLetter
+try {
+  Invoke-WebRequest -Uri "http://packagesource.contosoad.com/downloads/en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso" -OutFile "D:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso"
+  $setupDriveLetter = (Mount-DiskImage -ImagePath D:\en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564.iso -PassThru | Get-Volume).DriveLetter
 
 New-Item C:\SQLCD -ItemType Directory -Force
 Copy-Item "$($setupDriveLetter):\*" -Recurse -Destination C:\SQLCD -Verbose -ErrorAction Stop
+}
+catch {
+
+    $Error[0].PSMessageDetails | Out-File  C:\pcakages\error.log
+
+}
+
+
+

@@ -52,7 +52,7 @@ $SQLRSAccountCredentials = New-Object System.Management.Automation.PSCredential 
 
 
 
-Import-DscResource -ModuleName SQLServerDSC
+Import-DscResource -ModuleName SQLServerDSC -ModuleVersion 11.1.0.0
 Import-DscResource -ModuleName StorageDSC
 Import-DscResource -Module PSDscResources -ModuleVersion 2.8.0.0
 Import-DscResource -ModuleName xTimeZone -ModuleVersion 1.7.0.0
@@ -106,7 +106,7 @@ Node $NodeName {
         {
 
             Action                = 'Install'
-            InstanceName          = 'MSSQLSERVER'
+            InstanceName          = 'SCCM2017LAB'
             Features              = 'SQLENGINE,FULLTEXT,RS,SSMS,ADV_SSMS'
             SQLCollation          = 'SQL_Latin1_General_CP1_CI_AS'
             SQLSvcAccount         = $SQLServerAccountCredentials
@@ -136,9 +136,9 @@ Node $NodeName {
 
         {
 
-            InstanceName         = 'MSSQLSERVER'
+            InstanceName         = 'SCCM2017LAB'
             DatabaseServerName   = 'sql2014sccm'
-            DatabaseInstanceName = 'MSSQLSERVER'
+            DatabaseInstanceName = 'SCCM2017LAB'
             DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
 
         }
@@ -161,7 +161,7 @@ Node $NodeName {
             Name                 = 'ReportServer'
             RecoveryModel        = 'Simple'
             ServerName           = 'localhost'
-            InstanceName         = 'MSSQLSERVER'
+            InstanceName         = 'SCCM2017LAB'
             #PsDscRunAsCredential = $SqlAdministratorCredential
             DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
@@ -171,10 +171,54 @@ Node $NodeName {
             Name                 = 'ReportServerTempDB'
             RecoveryModel        = 'Full'
             ServerName           = 'localhost'
-            InstanceName         = 'MSSQLSERVER'
+            InstanceName         = 'SCCM2017LAB'
             #PsDscRunAsCredential = $SqlAdministratorCredential
             DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
+
+        <#SqlWindowsFirewall Create_FirewallRules
+       {
+             Ensure               = 'Present'
+             Features             = 'SQLENGINE,AS,RS,IS'
+             InstanceName         = 'SCCM2017LAB'
+             SourcePath           = $SQLSourceFolder
+         }#>
+
+         Script EnableFirewall
+        {
+            # Must return a hashtable with at least one key
+            # named 'Result' of type String
+            GetScript= {
+                Return @{
+                    Result = (Get-NetFirewallRule -DisplayName "SQL*").DisplayName
+                }
+            }
+            # Must return a boolean: $true or $false
+            TestScript = {
+
+                $sqlrules = (Get-NetFirewallRule -DisplayName "SQL*").DisplayName
+                if ($sqlrules.count -ne 3)
+                {
+                    return $false
+                }
+                else
+                {
+                    return $true
+                }
+
+                }
+            # Returns nothing
+            SetScript= {
+                Write-Verbose "Setting firewall rule SQL Server Access via TCP Port 1433"
+                New-NetFirewallRule -DisplayName "SQL Server Access via TCP Port 1433" -Direction Inbound -Action Allow -Protocol TCP –LocalPort 1433 -Description "SQL Server Port Access Rule" -Enabled True -Profile Domain
+                Write-Verbose "Setting firewall rule SQL Browser via UDP port 1434"
+                New-NetFirewallRule -DisplayName "SQL Browser via UDP port 1434" -Direction Inbound -Action Allow -Protocol UDP –LocalPort 1434 -Description "SQL Browser Port Access Rule" -Enabled True -Profile Domain
+                Write-Verbose "Setting firewall rule SQL Service Broker via TCP port 4022"
+                New-NetFirewallRule -DisplayName "SQL Service Broker via TCP port 4022" -Direction Inbound -Action Allow -Protocol UDP –LocalPort 4022 -Description "SQL Service Broker Access Rule" -Enabled True -Profile Domain
+            }
+        }
+
+
 
 
 
