@@ -41,7 +41,7 @@ Copy-Item "$($setupDriveLetter):\*" -Recurse -Destination C:\SQLCD -Verbose -Err
 }
 catch {
 
-    $Error[0].PSMessageDetails | Out-File  C:\pcakages\error.log
+    $Error[0].PSMessageDetails | Out-File "$($PWD)\error.log"
 
 }
 
