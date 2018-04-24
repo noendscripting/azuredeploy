@@ -1,6 +1,7 @@
 
 
-
+#Ping powershell to Taskbar
+(New-Object -ComObject shell.application).Namespace('C:\Windows\System32\WindowsPowershell\v1.0\').parsename('powershell.exe').invokeverb('TaskbarPin')
 #Verify if PowerShellGet module is installed. If not install
 if (!(Get-Module -Name PowerShellGet))
 {
