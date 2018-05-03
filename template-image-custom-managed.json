@@ -1,0 +1,146 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "Location": {
+      "type": "string",
+      "allowedValues":
+       [
+        "eastus2",
+        "westus2"
+      ]
+
+    },
+    "virtualMachineName": {
+      "type": "string"
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "allowedValues":
+       [
+        "Standard_D2_v2",
+        "Standard_F2"
+      ]
+    },
+    "customImageName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VHD to be used as source syspreped/generalized image to deploy the VM. E.g. mybaseimage.vhd."
+      }
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "virtualNetworkName": {
+      "type": "string"
+    },
+
+
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "subnetName": {
+      "type": "string"
+    },
+    "virtualNetResourceGroupName": {
+      "type": "string"
+    }
+
+
+
+  },
+  "variables": {
+
+    "VnetID": "[resourceId(parameters('virtualNetResourceGroupName'),'Microsoft.Network/virtualNetworks', parameters('virtualNetworkname'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+    "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
+    "publicIpAddressName": "[concat(parameters('virtualMachineName'),'PUBLICIP')]",
+    "policyName": "[concat('shutdown-computevm-',parameters('virtualMachineName'))]",
+    "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
+    "ImagePublisher": "MicrosoftWindowsServer",
+    "ImageOffer": "WindowsServer",
+    "WindowsOSVersion": "2012-R2-Datacenter"
+  },
+  "resources": [
+    {
+      "name": "[parameters('virtualMachineName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[parameters('virtualMachineName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+         "imageReference": {
+           "id": "[resourceId('Microsoft.Compute/images', parameters('customImageName'))]"
+         },
+          "osDisk": {
+            "osType": "Windows",
+            "name": "[parameters('virtualMachineName')]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite"
+          },
+
+          "dataDisks": [ ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+            }
+          ]
+
+        }
+      }
+    },
+
+    {
+      "name": "[variables('networkInterfaceName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "primary": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+
+            }
+          }
+        ]
+
+      }
+    }
+
+  ],
+  "outputs": {
+    "adminUsername": {
+      "type": "string",
+      "value": "[parameters('adminUsername')]"
+    },
+    "NIC": {
+      "type": "string",
+      "value": "[variables('networkInterfaceName')]"
+    }
+  }
+}
