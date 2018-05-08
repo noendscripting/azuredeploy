@@ -12,7 +12,7 @@ if (!(Get-Module -Name PowerShellGet))
 Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 #Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 Register-PSRepository -Name "Internal" -SourceLocation http://packagesource.contosoad.com/nuget -InstallationPolicy Trusted
-Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources,xWebAdministration,xWindowsUpdate -Scope AllUsers -Confirm:$false -Force -Repository "Internal"
+Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources,xWebAdministration,xWindowsUpdate,xNetworking -Scope AllUsers -Confirm:$false -Force -Repository "Internal"
 #Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=839516" -OutFile "$($PWD)\wmf5.1.msu"
 
 Invoke-WebRequest -Uri "http://packagesource.contosoad.com/downloads/wmf5.1.msu" -OutFile "$($PWD)\wmf5.1.msu"
@@ -44,6 +44,5 @@ catch {
     $Error[0].PSMessageDetails | Out-File "$($PWD)\error.log"
 
 }
-
 
 

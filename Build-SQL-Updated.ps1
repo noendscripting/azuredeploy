@@ -34,10 +34,10 @@ Configuration ConfigurationSQL
 	)
 
 
-$PlainPassword = "1hfxLwbLsT4PbE4JztmeLOm+4I6eEmPMUnlgB0x4tHTN6qMQ4Hdb56oNLZuKIhOnm+uf8lbDMBXl7QdxtSPj/Q=="
+<#$PlainPassword = "1hfxLwbLsT4PbE4JztmeLOm+4I6eEmPMUnlgB0x4tHTN6qMQ4Hdb56oNLZuKIhOnm+uf8lbDMBXl7QdxtSPj/Q=="
 $SecurePassword = $PlainPassword | ConvertTo-SecureString -AsPlainText -Force
 $UserName = "101filepoc"
-$DriveCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $SecurePassword
+$DriveCredentials = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $SecurePassword#>
 
 
 $SQLServerDomainPassword = ConvertTo-SecureString -AsPlainText -Force "P2ssw0rd"
@@ -56,6 +56,7 @@ Import-DscResource -ModuleName SQLServerDSC -ModuleVersion 11.1.0.0
 Import-DscResource -ModuleName StorageDSC
 Import-DscResource -Module PSDscResources -ModuleVersion 2.8.0.0
 Import-DscResource -ModuleName xTimeZone -ModuleVersion 1.7.0.0
+Import-DscResource -ModuleName xNetworking
 Node $NodeName {
     LocalConfigurationManager
 		{
@@ -106,7 +107,7 @@ Node $NodeName {
         {
 
             Action                = 'Install'
-            InstanceName          = 'SCCM2017LAB'
+            InstanceName          = 'MSSQLSERVER'
             Features              = 'SQLENGINE,FULLTEXT,RS,SSMS,ADV_SSMS'
             SQLCollation          = 'SQL_Latin1_General_CP1_CI_AS'
             SQLSvcAccount         = $SQLServerAccountCredentials
@@ -176,56 +177,50 @@ Node $NodeName {
             DependsOn = '[SqlSetup]InstallNamedInstance_INST2014'
         }
 
-        <#SqlWindowsFirewall Create_FirewallRules
+
+         xFirewall SQL_1433_Inbound_TCP
        {
              Ensure               = 'Present'
-             Features             = 'SQLENGINE,AS,RS,IS'
-             InstanceName         = 'SCCM2017LAB'
-             SourcePath           = $SQLSourceFolder
-         }#>
-         Script EnableFirewall
-         {
-             # Must return a hashtable with at least one key
-             # named 'Result' of type String
-             GetScript= {
-                 Return @{
-                     Result = Get-NetFirewallRule -DisplayName "SQL*"
-                 }
-             }
-             # Must return a boolean: $true or $false
-             TestScript = {
+             Name                 = 'SQL-TCP-Port-1433-Allow-Inbound'
+             Displayname          = 'SQL Server Access via TCP Port 1433'
+             Description          = "SQL Server Port Access Rule"
+             Profile              = ('Domain')
+             Direction            = "Inbound"
+             LocalPort            = ('1433')
+             Action               = "Allow"
+             Protocol             = "TCP"
+             Enabled              = "True"
 
-                 $sqlrules = Get-NetFirewallRule -DisplayName "SQL*"
-                 if ($sqlrules -eq $null -xor $sqlrules.count -ne 3)
-                 {
-                     return $false
-                 }
-                 else
-                 {
-                     return $true
-                 }
 
-                 }
-             # Returns nothing
-             SetScript= {
-                 Write-Verbose "Setting firewall rule SQL Server Access via TCP Port 1433"
-                 New-NetFirewallRule -Name "SQL-TCP-Port-1433-Allow-Inbound" -DisplayName "SQL Server Access via TCP Port 1433" -Direction Inbound -Action Allow -Protocol TCP –LocalPort 1433 -Description "SQL Server Port Access Rule" -Enabled True -Profile Domain
-                 Write-Verbose "Setting firewall rule SQL Browser via UDP port 1434"
-                 New-NetFirewallRule -DisplayName "SQL Browser via UDP port 1434" -Direction Inbound -Action Allow -Protocol UDP –LocalPort 1434 -Description "SQL Browser Port Access Rule" -Enabled True -Profile Domain -Name "SQL-Browser-UDP-Port-1434-Allow-Inbound"
-                 Write-Verbose "Setting firewall rule SQL Service Broker via TCP port 4022"
-                 New-NetFirewallRule -DisplayName "SQL Service Broker via TCP port 4022" -Direction Inbound -Action Allow -Protocol UDP –LocalPort 4022 -Description "SQL Service Broker Access Rule" -Enabled True -Profile Domain -Name "SQL-Broker-TCP-Port-4022-Allow-Inbound"
-             }
+         }
+         xFirewall SQL_1434_Inbound_UDP
+       {
+             Ensure               = 'Present'
+             Name                 = 'SQL-Browser-UDP-Port-1434-Allow-Inbound'
+             Displayname          = 'SQL Browser via UDP port 1434'
+             Description          = "SQL Browser Port Access Rule"
+             Profile              = ('Domain')
+             Direction            = "Inbound"
+             LocalPort            = ('1434')
+             Action               = "Allow"
+             Protocol             = "UDP"
+             Enabled              = "True"
          }
 
+         xFirewall SQL_4022_Inbound_UDP
+       {
+             Ensure               = 'Present'
+             Name                 = 'SQL-Broker-TCP-Port-4022-Allow-Inbound'
+             Displayname          = 'SQL Service Broker via TCP port 4022'
+             Description          = "SQL Browser Port Access Rule"
+             Profile              = ('Domain')
+             Direction            = "Inbound"
+             LocalPort            = ('4022')
+             Action               = "Allow"
+             Protocol             = "UDP"
+             Enabled              = "True"
 
-
-
-
-
-
-
-
-
+         }
     }
 }
 ConfigurationSQL -Nodename sql2014sccm.eastus2.cloudapp.azure.com -ConfigurationData $MyData -Outputpath c:\os\temp\testdsc

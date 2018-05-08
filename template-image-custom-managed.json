@@ -23,10 +23,7 @@
       ]
     },
     "customImageName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the VHD to be used as source syspreped/generalized image to deploy the VM. E.g. mybaseimage.vhd."
-      }
+      "type": "string"
     },
     "adminUsername": {
       "type": "string"
@@ -47,7 +44,12 @@
     },
     "virtualNetResourceGroupName": {
       "type": "string"
-    }
+    },
+    "vmImageResourceGroupName": {
+      "type": "string"
+
+    },
+    "imageSubscriotionId": {"type": "string"}
 
 
 
@@ -86,9 +88,10 @@
           "vmSize": "[parameters('virtualMachineSize')]"
         },
         "storageProfile": {
-         "imageReference": {
-           "id": "[resourceId('Microsoft.Compute/images', parameters('customImageName'))]"
-         },
+          "imageReference": {
+            //"id": "[resourceId(parameters('vmImageResourceGroupName'),'Microsoft.Compute/images', parameters('customImageName'))]"
+            "id": "[resourceId(parameters('imageSubscriotionId'),parameters('vmImageResourceGroupName'),'Microsoft.Compute/images', parameters('customImageName'))]"
+          },
           "osDisk": {
             "osType": "Windows",
             "name": "[parameters('virtualMachineName')]",
