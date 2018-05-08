@@ -4,19 +4,19 @@
 #Verify if PowerShellGet module is installed. If not install
 if (!(Get-Module -Name PowerShellGet))
 {
-    Invoke-WebRequest 'http://packagesource.contosoad.com/downloads/PackageManagement_x64.msi' -OutFile "$($PWD)\PackageManagement_x64.msi"
+    Invoke-WebRequest 'http://packagesource.contosoad.com/downloads/PackageManagement_x64.msi' -OutFile "$($PWD)\PackageManagement_x64.msi" -ErrorAction Stop
     Start-Process "$($PWD)\PackageManagement_x64.msi" -ArgumentList "/qn" -Wait
   }
 
 
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -ErrorAction Stop
 #Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Register-PSRepository -Name "Internal" -SourceLocation http://packagesource.contosoad.com/nuget -InstallationPolicy Trusted
-Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources,xWebAdministration,xWindowsUpdate,xNetworking -Scope AllUsers -Confirm:$false -Force -Repository "Internal"
+Register-PSRepository -Name "Internal" -SourceLocation http://packagesource.contosoad.com/nuget -InstallationPolicy Trusted -ErrorAction Stop
+Install-Module -Name SQLServerDSC,StorageDSC,XtimeZone,PSDscResources,xWebAdministration,xWindowsUpdate,xNetworking -Scope AllUsers -Confirm:$false -Force -Repository "Internal" -ErrorAction Stop
 #Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=839516" -OutFile "$($PWD)\wmf5.1.msu"
 
-Invoke-WebRequest -Uri "http://packagesource.contosoad.com/downloads/wmf5.1.msu" -OutFile "$($PWD)\wmf5.1.msu"
-Start-Process -FilePath 'wusa.exe' -ArgumentList "$($PWD)\wmf5.1.msu /quiet /noreboot" -NoNewWindow -Wait
+Invoke-WebRequest -Uri "http://packagesource.contosoad.com/downloads/wmf5.1.msu" -OutFile "$($PWD)\wmf5.1.msu" -ErrorAction Stop
+Start-Process -FilePath 'wusa.exe' -ArgumentList "$($PWD)\wmf5.1.msu /quiet /noreboot" -NoNewWindow -Wait -ErrorAction Stop
 
 $Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName $env:COMPUTERNAME
 Enable-PSRemoting -SkipNetworkProfileCheck -Force
