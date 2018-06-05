@@ -4,8 +4,7 @@
   "parameters": {
     "Location": {
       "type": "string",
-      "allowedValues":
-       [
+      "allowedValues": [
         "eastus2",
         "westus2"
       ]
@@ -15,12 +14,7 @@
       "type": "string"
     },
     "virtualMachineSize": {
-      "type": "string",
-      "allowedValues":
-       [
-        "Standard_D2_v2",
-        "Standard_F2"
-      ]
+      "type": "string"
     },
     "customImageName": {
       "type": "string"
@@ -28,14 +22,12 @@
     "adminUsername": {
       "type": "string"
     },
-    "storageAccountName": {
-      "type": "string"
-    },
+    //"storageAccountName": {
+    //  "type": "string"
+    //},
     "virtualNetworkName": {
       "type": "string"
     },
-
-
     "adminPassword": {
       "type": "securestring"
     },
@@ -49,7 +41,11 @@
       "type": "string"
 
     },
-    "imageSubscriotionId": {"type": "string"}
+    "imageSubscriotionId": { "type": "string" },
+    "dataDriveCount": {
+      "type": "int",
+      "minValue": 1
+    }
 
 
 
@@ -97,9 +93,7 @@
             "name": "[parameters('virtualMachineName')]",
             "createOption": "FromImage",
             "caching": "ReadWrite"
-          },
-
-          "dataDisks": [ ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [

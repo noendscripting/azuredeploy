@@ -6,7 +6,7 @@
       "value": "eastus2"
     },
     "virtualMachineName": {
-      "value": "ClientTest"
+      "value": "ServerFromImage"
     },
     "virtualMachineSize": {
       "value": "Standard_A1_v2"
@@ -15,19 +15,19 @@
       "value": "vadmin"
     },
     "virtualNetworkName": {
-      "value": "LimitedVnet"
+      "value": "VNET02"
     },
     "subnetName": {
-      "value": "FirstSubnet"
+      "value": "BackendSubnet"
     },
     "adminPassword": {
       "value": "Test@2016"
-    },
-    "dnsIp": {
-      "value": "10.97.0.4"
-    },
-    "domain": {
-      "value": "contosoad.com"
-    }
+    }//,
+    //"dnsIp": {
+    //  "value": "10.97.0.4"
+    //},
+    //"domain": {
+    //  "value": "contosoad.com"
+    //}
   }
 }
