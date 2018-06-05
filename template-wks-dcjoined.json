@@ -19,7 +19,7 @@
     },
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "VNET02"
+      "defaultValue": "LimitedVnet"
     },
     "adminPassword": {
       "type": "securestring",
@@ -27,7 +27,7 @@
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "BackendSubnet"
+      "defaultValue": "FirstSubnet"
     },
     "publicIpAddressType": {
       "type": "string",
