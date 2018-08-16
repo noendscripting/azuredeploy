@@ -41,12 +41,8 @@
       "type": "int",
       "minValue": 1
     },
-    "dnsIP": {
-      "type": "string"
-    },
-    "domain": {
-      "type": "string"
-    },
+
+    
     "virtualNetResourceGroupName": {
       "type": "string",
       "defaultValue": "NetworkSubnet"
@@ -58,11 +54,10 @@
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
     "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
     "publicIpAddressName": "[concat(parameters('virtualMachineName'),'PUBLICIP')]",
-    "policyName": "[concat('shutdown-computevm-',parameters('virtualMachineName'))]",
-    "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-    "BuildConfigScriptFolder": "lab",
-    "BuildConfigScriptFileName": "Temp.ps1",
-    "StorageAccount": "https://101stagingacc.blob.core.windows.net"
+    "policyName": "[concat('shutdown-computevm-',parameters('virtualMachineName'))]"
+
+  
+    
   },
   "resources": [
     {
@@ -118,37 +113,8 @@
 
         }
 
-      },
-      "resources": [
-        // Join domain - Json AD Domain Extension
-        {
-          "comments": "Join domain - JsonADDomainExtension",
-          "apiVersion": "2015-06-15",
-          "type": "extensions",
-          "name": "joinDomain",
-          "location": "[resourceGroup().location]",
-          "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/',parameters('virtualMachineName'),copyIndex())]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Compute",
-
-            "type": "JsonADDomainExtension",
-            "typeHandlerVersion": "1.0",
-            "settings": {
-              "Name": "[parameters('Domain')]",
-              "User": "[concat(parameters('Domain'), '\\', parameters('AdminUserName'))]",
-              "OUPath": "OU=Company Computers,DC=contosoad,DC=com",
-              "Restart": "true",
-              "Options": 3
-            },
-            "protectedsettings": {
-              "Password": "[parameters('AdminPassword')]"
-            }
-          }
-        }
-
-      ]
+      }
+      
     },
 
     {
@@ -183,7 +149,7 @@
           }
         ],
         "dnsSettings": {
-          "dnsServers": [ "[parameters('dnsIP')]" ]
+
         }
 
       }

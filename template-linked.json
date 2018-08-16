@@ -97,7 +97,7 @@
       "name": "VirtualNetwork",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -136,7 +136,54 @@
         }
       }
     },
-     //Base VM
+    //Base VM
+    {
+      "name": "BaseVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/VirtualNetwork"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[parameters('vmTemplateURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "virtualMachineName": {
+            "value": "[parameters('virtualMachineName')]"
+          },
+          "virtualMachineSize": {
+            "value": "[parameters('virtualMachineSize')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+
+          "adminPassword": {
+            "value": "[parameters('virtualMachineName')]"
+          },
+          "sku": {
+
+            "value": "[parameters('sku')]"
+          },
+          "subnetName": {
+            "value": "[parameters('VNETSubnet1Name')]"
+          },
+          "dataDriveCount": {
+            "value": "[parameters('dataDriveCount')]"
+          },
+          "publicIpAddressType": {
+            "value": "Dynamic"
+          }
+        }
+      }
+    },
+    //MultyVM
     {
       "name": "BaseVM",
       "type": "Microsoft.Resources/deployments",
@@ -183,7 +230,6 @@
         }
       }
     }
-
 
   ],
   "outputs": {
