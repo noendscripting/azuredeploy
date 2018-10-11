@@ -88,7 +88,7 @@
           "osDisk": {
             "createOption": "FromImage",
             "caching": "ReadWrite",
-            "diskSizeGB": "256"
+            "diskSizeGB": 128
           },
           "copy": [
             {
@@ -111,7 +111,7 @@
 
         }
 
-      } 
+      }
     },
 
     {
