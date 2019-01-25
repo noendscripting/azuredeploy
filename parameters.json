@@ -53,6 +53,18 @@
         "value": false,
         "metadata": {
           "description": "Should the OS partition be resized to occupy full OS VHD before splitting system volume"
+        },
+        "backupPolicyDsiplayname":{
+          "value":"DefaultPolicy"
+        },
+        "vaultName" : {
+          "value": "PFE-LAB-VAULT"
+        },
+        "sku": {
+          "value":"2016-Datacenter"
+        },
+        "publicIpAddressType":{
+          "value":"Dynamic"
         }
     }
     //"dnsIp": {

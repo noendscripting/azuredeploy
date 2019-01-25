@@ -51,7 +51,7 @@
         "type":"string",
         "defaultValue": "MainVault"
       },
-      "backupPolicyName" : {
+      "backupPolicyDsiplayname" : {
         "type": "string",
         "defaultValue": "LeastExpensive"
       },
@@ -274,14 +274,27 @@
         "name": "BackupConfig",
         "type": "Microsoft.Resources/deployments",
         "apiVersion": "2017-05-10",
-        "dependsOn": [],
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+        ],
         "resourceGroup": "StageGroup",
         "properties":{
           "mode":"Incremental",
          "templateLink":{
-           "uri": "backup-template.json"
+           "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/backup-template.json"
+         },
+         "parameters":{
+          "vaultName" : {
+            "value":"[parameters('vaultName')]"
+        },
+        "vmResourceID": {
+          "value": "[variables('vmResourceId')]"
+      },"backupPolicyName" : {
+        "value": "[parameters('backupPolicyDsiplayname')]"
+    }
          }
         }
+        
       }
       
       
