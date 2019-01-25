@@ -2,14 +2,11 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
   "parameters": {
-    //"location": {
-    //  "value": "eastus2"
-    //},
     "virtualMachineName": {
-      "value": "DiskSizetest"
+      "value": "BETest"
     },
     "virtualMachineSize": {
-      "value": "Standard_A1_v2"
+      "value": "Standard_A3"
     },
     "adminUsername": {
       "value": "vadmin"
@@ -21,8 +18,43 @@
       "value": "BackendSubnet"
     },
     "adminPassword": {
-      "value": "Test@2016"
-    }//,
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/202a9776-d703-4e12-991a-4363824c532c/resourceGroups/StageGroup/providers/Microsoft.KeyVault/vaults/ServerBuild"
+        },
+        "secretName": "defaultServerPass"
+      } 
+    },
+    "dataDriveCount": {
+      "value": 2
+    },
+      "keyVaultName": {
+        "value": "ServerBuild"
+      },
+      "keyVaultResourceGroup": {  
+        "value": "StageGroup",  
+        "metadata": {  
+          "description": "Resource group of the KeyVault"  
+        }  
+      },
+      "volumeType": {
+        "value": "All",  
+        "metadata": {  
+          "description": "Type of the volume OS or Data to perform encryption operation"
+        }
+      },  
+      "forceUpdateTag": {  
+        "value": "1.0",  
+        "metadata": {  
+          "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"  
+        }  
+      },
+      "resizeOSDisk": {
+        "value": false,
+        "metadata": {
+          "description": "Should the OS partition be resized to occupy full OS VHD before splitting system volume"
+        }
+    }
     //"dnsIp": {
     //  "value": "10.97.0.4"
     //},
