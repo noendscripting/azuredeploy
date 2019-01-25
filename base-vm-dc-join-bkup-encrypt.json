@@ -284,14 +284,18 @@
            "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/backup-template.json"
          },
          "parameters":{
-          "vaultName" : {
-            "value":"[parameters('vaultName')]"
-        },
-        "vmResourceID": {
-          "value": "[variables('vmResourceId')]"
-      },"backupPolicyName" : {
-        "value": "[parameters('backupPolicyDsiplayname')]"
-    }
+            "vaultName" : {
+              "value":"[parameters('vaultName')]"
+            },
+            "vmResourceID": {
+              "value": "[variables('vmResourceId')]"
+            },
+            "backupPolicyName" : {
+              "value": "[parameters('backupPolicyDsiplayname')]"
+            },
+            "virtualMachineName" :{
+              "value":"[parameters('virtualMachineName')]"
+            }
          }
         }
         
