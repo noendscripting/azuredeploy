@@ -1,0 +1,104 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "networkInterfaceName":
+        {
+            "type": "string"
+        },
+        "subnetRef":{
+            "type": "string"
+        },
+        "nicType":{
+            "type": "string",
+            "allowedValues": [
+                "Public",
+                "Private"
+            ]
+        },
+        "virtualMachineName": {
+            "type": "string"
+          }
+    },
+    "variables": {
+        "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('virtualMachineName'),deployment().name)]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10"
+
+        },
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "condition":"[equals(parameters('nicType'),'Public')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+              
+            ],
+            "tags": {
+              "displayName": "PublicNIC"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[parameters('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIPAddress": {
+                        "id": "placeholder"
+                    }
+                  }
+                
+                }
+                
+              ]
+      
+      
+            }
+          
+          },
+          {
+            "name": "[parameters('networkInterfaceName')]",
+            "condition":"[equals(parameters('nicType'),'Private')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [           
+            ],
+            "tags": {
+              "displayName": "PrivateNIC"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[parameters('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Dynamic"
+                  }
+                }
+              ]
+      
+      
+            }
+          
+          }
+    ],
+    "outputs": {
+        "idNIC":{
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+        }
+    }
+}

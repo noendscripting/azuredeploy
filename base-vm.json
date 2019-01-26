@@ -11,15 +11,11 @@
     "adminUsername": {
       "type": "string"
     },
-    "virtualNetworkName": {
-      "type": "string"
-    },
+    
     "adminPassword": {
       "type": "securestring"
     },
-    "subnetName": {
-      "type": "string"
-    },
+    
     "sku": {
       "type": "string",
       "allowedValues": [
@@ -28,31 +24,14 @@
         "2008-R2-SP1"
       ]
     },
-    "publicIpAddressType": {
+    "nicID":{
       "type": "string"
-    },
-    "time": {
-      "type": "string",
-      "defaultValue": "23:00"
-    },
-    "sasKey": {
-      "type": "string",
-        "defaultValue": "odhdtdt"
-    },
-    "dataDriveCount": {
-      "type": "int",
-      "minValue": 1
     }
 
   },
   "variables": {
-    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkname'))]",
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
-    "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
-    "publicIpAddressName": "[concat(parameters('virtualMachineName'),'PUBLICIP')]",
+    
     "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-    "BuildConfigScriptFileName": "Temp.ps1",
-    "StorageAccount": "https://101stagingacc.blob.core.windows.net"
   },
   "resources": [
     {
@@ -61,7 +40,6 @@
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
       ],
       "tags": {
         "displayName": "BaseVM"
@@ -89,78 +67,24 @@
             "createOption": "FromImage",
             "caching": "ReadWrite",
             "diskSizeGB": 128
-          },
-          "copy": [
-            {
-              "name": "DataDisks",
-              "count": "[parameters('dataDriveCount')]",
-              "input": {
-                "diskSizeGB": 20,
-                "lun": "[copyIndex('dataDisks')]",
-                "CreateOption": "Empty"
-              }
-            }
-          ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+              "id": "[parameters('nicID')]"
             }
           ]
 
         }
 
       }
-    },
-
-    {
-      "name": "[variables('networkInterfaceName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
-      ],
-      "tags": {
-        "displayName": "BaseVMNIC"
-      },
-      "properties": {
-        "primary": true,
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              },
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
-              }
-            }
-          }
-        ]
-
-      }
-    },
-    {
-      "name": "[variables('publicIpAddressName')]",
-      "Type": "Microsoft.Network/publicIpAddresses",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "BaseVMPublicIP"
-      },
-      "Properties": {
-        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
-      }
     }
   ],
   "outputs": {
-    "adminUsername": {
+    "vmResourceID": {
       "type": "string",
-      "value": "[parameters('adminUsername')]"
+      "value": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
     }
   }
 }

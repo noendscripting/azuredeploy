@@ -1,0 +1,38 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "publicIpAddressName":{
+            "type": "string"
+        },
+        "publicIpAddressType":{
+            "type": "string"
+        },
+        "publicIPAddressTier":{
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [{
+        "name": "[parameters('publicIpAddressName')]",
+        "Type": "Microsoft.Network/publicIpAddresses",
+        "apiVersion": "2018-08-01",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "BasePublicIP"
+        },
+        "Properties": {
+          "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+        },
+        "sku":{
+            "name":"[parameters('publicIPAddressTier')]"
+        }
+      }],
+    "outputs": {
+        "publicIPAddressID":{
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/publicIpAddresses',parameters('publicIpAddressName'))]"
+        }
+    }
+
+}
