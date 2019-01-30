@@ -27,11 +27,15 @@
           "displayName": "BasePublicIP"
         },
         "Properties": {
-          "publicIpAllocationMethod": "[parameters('publicIPData').Allocation]"
+          "publicIpAllocationMethod": "[parameters('publicIPData').Allocation]",
+          "dnsSettings":{
+              "domainNameLabel":""
+          }
         },
         "sku":{
             "name":"[parameters('publicIPData').Sku]"
         }
+        
       }],
     "outputs": {
         "publicIPAddressID":{
