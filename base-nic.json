@@ -18,7 +18,7 @@
     },
     "variables": {
         "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
-        "pubIPdeploymentName":"[concat(parameters('virtualMachineName'),deployment().name)]"
+        "pubIPdeploymentName":"[concat(variables('networkInterfaceName'),'PIP',deployment().name)]"
     },
     "resources": [
         {
@@ -67,7 +67,8 @@
                     },
                     "privateIPAllocationMethod": "Dynamic",
                     "publicIPAddress": {
-                        "id": "placeholder"
+                        "id": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))).outputs.publicIPAddressID.value]"
+                        //"id": "/subscriptions/202a9776-d703-4e12-991a-4363824c532c/resourceGroups/LinkedTestRG/providers/Microsoft.Network/publicIPAddresses/computer003PUBLICIP"
                     }
                   }
                 
@@ -113,6 +114,10 @@
         "idNIC":{
             "type": "string",
             "value": "[if(equals(parameters('nicType'),'Public'),resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'),'pb')),resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'),'pr')))]"
+        },
+        "publicNICdata":{
+          "type": "string",
+          "value": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))).outputs.publicIPAddressID.value]"
         }
     }
 }

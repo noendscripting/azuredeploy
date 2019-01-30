@@ -32,6 +32,7 @@
   "variables": {
     
     "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
+    "vmNICDeployementName":"[concat(parameters('virtualMachineName'),'NIC',deployment().name)]"
   },
   "resources": [
     {
@@ -79,6 +80,19 @@
         }
 
       }
+    },
+    {
+      "name": "[variables('vmNICDeployementName')]",
+      "apiVersion": "2017-05-10",
+      "type": "Microsoft.Resources/deployments".
+      "properties":{
+        "mode":"Incremental",
+        "templateLink":{
+          "uri": ""
+        }
+      }
+
+
     }
   ],
   "outputs": {
