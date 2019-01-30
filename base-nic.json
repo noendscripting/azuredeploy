@@ -22,20 +22,22 @@
     },
     "resources": [
         {
-            "name":"[variables('pubIPdeploymentName')]" ,
+            "name":"[concat(variables('pubIPdeploymentName'))]" ,
             "condition":"[equals(parameters('nicType'),'Public')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2017-05-10",
             "properties":{
-                "mode":"Complete",
+                "mode":"Incremental",
                 "templateLink":{
                     "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/base-publicIP.json"
                 },
                 "parameters":{
                     "publicIPData":{
+                      "value":{
                         "vmName":"[parameters('virtualMachineName')]",
-                        "Type": "Dynamic",
-                        "Sku": "Basic"
+                        "Sku": "Basic",
+                        "Allocation":"Dynamic"
+                      }
 
                     }
                 }
@@ -43,13 +45,13 @@
 
         },
         {
-            "name": "[variables('networkInterfaceName')]",
+            "name": "[concat(variables('networkInterfaceName'),'pb')]",
             "condition":"[equals(parameters('nicType'),'Public')]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2015-06-15",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-              "[concat('Microsoft.Resources/deployments',variables('pubIPdeploymentName'))]"
+              "[concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))]"
             ],
             "tags": {
               "displayName": "PublicNIC"
@@ -78,7 +80,7 @@
           
           },
           {
-            "name": "[parameters('networkInterfaceName')]",
+            "name":  "[concat(variables('networkInterfaceName'),'pr')]",
             "condition":"[equals(parameters('nicType'),'Private')]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2015-06-15",
@@ -110,7 +112,8 @@
     "outputs": {
         "idNIC":{
             "type": "string",
-            "value": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+            "value": "[if(equals(parameters('nicType'),'Public'),resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'),'pb')),resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'),'pr')))]"
         }
     }
 }
+

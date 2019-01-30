@@ -27,7 +27,7 @@
           "displayName": "BasePublicIP"
         },
         "Properties": {
-          "publicIpAllocationMethod": "[parameters('publicIPData').Type]"
+          "publicIpAllocationMethod": "[parameters('publicIPData').Allocation]"
         },
         "sku":{
             "name":"[parameters('publicIPData').Sku]"
@@ -36,7 +36,7 @@
     "outputs": {
         "publicIPAddressID":{
             "type": "string",
-            "value": "[resourceId('Microsoft.Network/publicIpAddresses',parameters('publicIpAddressName'))]"
+            "value": "[resourceId('Microsoft.Network/publicIpAddresses',variables('publicIpAddressName'))]"
         }
     }
 
