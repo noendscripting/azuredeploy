@@ -122,7 +122,7 @@
             "value": "[parameters('virtualMachineName')]"
             },
           "VNETResourceGroup": {
-            "valuue":"[parameters('VNETResourceGroup')]"
+            "value":"[parameters('VNETResourceGroup')]"
             },
           "VNET":{
             "Value": "[parameters('VNET')]"
@@ -135,7 +135,7 @@
       
 
 
-    }
+  }
   ],
   "outputs": {
     "vmResourceID": {
