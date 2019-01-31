@@ -6,10 +6,12 @@
       "type": "string"
     },
     "virtualMachineSize": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": "A2_Standard"
     },
     "adminUsername": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": "vadmin"
     },
     
     "adminPassword": {
@@ -22,17 +24,38 @@
         "2012-R2-Datacenter",
         "2016-Datacenter",
         "2008-R2-SP1"
-      ]
+      ],
+      "defaultValue": "2016-Datacenter"
     },
-    "nicID":{
-      "type": "string"
+    "nicType":{
+      "type": "string",
+      "allowedValues": [
+          "Public",
+          "Private"
+      ],
+      "defaultValue": "Public"
+  },
+    "VNETResourceGroup":
+    {
+      "type":"string",
+      "defaultValue": "BaseLab"
+    },
+    "VNET": {
+      "type": "string",
+      "defaultValue": "VNET02"
+    },
+    "subnetName":{
+      "type":"string",
+      "defaultValue": "BackendSubnet"
     }
+
 
   },
   "variables": {
     
     "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-    "vmNICDeployementName":"[concat(parameters('virtualMachineName'),'NIC',deployment().name)]"
+    "vmNICDeployementName":"[concat(parameters('virtualMachineName'),'NIC',deployment().name)]",
+    "nicID":"reference(concat('Microsoft.Resources/deployments/',variables('vmNICDeployementName'))).outputs.idNIC.value]"
   },
   "resources": [
     {
@@ -73,7 +96,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[parameters('nicID')]"
+              "id": "[variables('nicID')]"
             }
           ]
 
@@ -84,13 +107,32 @@
     {
       "name": "[variables('vmNICDeployementName')]",
       "apiVersion": "2017-05-10",
-      "type": "Microsoft.Resources/deployments".
+      "type": "Microsoft.Resources/deployments",
       "properties":{
         "mode":"Incremental",
         "templateLink":{
-          "uri": ""
+          "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/base-nic.json"
+        },
+        "parameters":{
+
+          "nicType":{
+            "value":"[parameters('nicType')]"
+            },
+          "virtualMachineName": {
+            "value": "[parameters('virtualMachineName')]"
+            },
+          "VNETResourceGroup": {
+            "valuue":"[parameters('VNETResourceGroup')]"
+            },
+          "VNET":{
+            "Value": "VNET02"
+          },
+          "subnetName":{
+            "Value": "[parameters('subnetName')]"
+          }
         }
       }
+      
 
 
     }

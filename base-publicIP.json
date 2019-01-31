@@ -3,17 +3,11 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "publicIPData":{
-            "type": "object"
+            "type": "object",
+            "metadata": {
+                "description":"object with values required to build a public IP"
+            }
         }
-        //"publicIpAddressName":{
-        //    "type": "string"
-        //},
-        //"publicIpAddressType":{
-        //   "type": "string"
-        //},
-        //"publicIPAddressTier":{
-        //    "type": "string"
-        //}
     },
     "variables": {
         "publicIpAddressName": "[concat(parameters('publicIPData').VmName,'PUBLICIP')]"

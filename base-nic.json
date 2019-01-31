@@ -2,9 +2,7 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "subnetRef":{
-            "type": "string"
-        },
+       
         "nicType":{
             "type": "string",
             "allowedValues": [
@@ -14,11 +12,24 @@
         },
         "virtualMachineName": {
             "type": "string"
-          }
+          },
+        "VNETResourceGroup": {
+          "type":"string",
+          "defaultValue": "BaseLab"
+          },
+        "VNET":{
+          "type": "string",
+          "defaultValue": "VNET02"
+          },
+        "subnetName":{
+      "type":"string",
+      "defaultValue": "BackendSubnet"
+      }
     },
     "variables": {
         "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
-        "pubIPdeploymentName":"[concat(variables('networkInterfaceName'),'PIP',deployment().name)]"
+        "pubIPdeploymentName":"[concat(variables('networkInterfaceName'),'PIP',deployment().name)]",
+        "subnetRef": "[resourceId(subscription().id,parameters('VNETResourceGroup'),'Microsoft.Network/virtualNetworks', parameters('VNET'),'/subnets/', parameters('subnetName'))]"
     },
     "resources": [
         {
@@ -63,12 +74,11 @@
                   "name": "ipconfig1",
                   "properties": {
                     "subnet": {
-                      "id": "[parameters('subnetRef')]"
+                      "id": "[variables('subnetRef')]"
                     },
                     "privateIPAllocationMethod": "Dynamic",
                     "publicIPAddress": {
                         "id": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))).outputs.publicIPAddressID.value]"
-                        //"id": "/subscriptions/202a9776-d703-4e12-991a-4363824c532c/resourceGroups/LinkedTestRG/providers/Microsoft.Network/publicIPAddresses/computer003PUBLICIP"
                     }
                   }
                 
@@ -98,7 +108,7 @@
                   "name": "ipconfig1",
                   "properties": {
                     "subnet": {
-                      "id": "[parameters('subnetRef')]"
+                      "id": "[variables('subnetRef')]"
                     },
                     "privateIPAllocationMethod": "Dynamic"
                   }
