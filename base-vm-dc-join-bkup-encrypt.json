@@ -8,18 +8,6 @@
     "virtualMachineSize": {
       "type": "string"
     },
-    "adminUsername": {
-      "type": "string"
-    },
-    "virtualNetworkName": {
-      "type": "string"
-    },
-    "adminPassword": {
-      "type": "securestring"
-    },
-    "subnetName": {
-      "type": "string"
-    },
     "sku": {
       "type": "string",
       "allowedValues": [
@@ -28,8 +16,40 @@
         "2008-R2-SP1"
       ]
     },
-    "publicIpAddressType": {
+    "adminUsername": {
       "type": "string"
+    },
+    "passwordKeyVaultName": {
+      "type": "string"
+    },
+    "passwordkeyVaultRG":{
+      "type": "string"
+    },
+    "passwordKeyVaultSecret":
+    {
+      "type": "string"
+    },
+   
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "VNET02"
+    },
+    "VNETResourceGroup":
+    {
+      "type": "string",
+      "defaultValue": "Baselab"
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "BackendSubnet"
+    },   
+    "nicType":{
+      "type": "string",
+      "allowedValues": [
+        "Public",
+        "Private"
+      ],
+     "defaultValue": "Public"
     },
     "time": {
       "type": "string",
@@ -52,6 +72,10 @@
       },
       "backupPolicyDsiplayname" : {
         "type": "string"
+      },
+      "vaultResourceGroup":{
+        "type": "string",
+        "defaultValue": "Baselab"
       },
       "keyVaultName": {
         "type": "string",  
@@ -93,67 +117,24 @@
     "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
     "publicIpAddressName": "[concat(parameters('virtualMachineName'),'PUBLICIP')]",
     "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-    "policyName": "[concat('shutdown-computevm-',parameters('virtualMachineName'))]",
+    "DeploymentNames":{
+      "vm":"[concat(deployment().name,parameters('virtualMachineName'))]",
+      "backup":"[concat(parameters('virtualMachineName'),'-BackupConfig')]",
+      "scheduleName": "[concat('shutdown-computevm-',parameters('virtualMachineName'))]"
+    },
     
-    "extensionName": "AzureDiskEncryption",
+    "passwordKeyVaultID": "[resourceId(parameters('passwordkeyVaultRG'),'Microsoft.KeyVault/vaults',parameters('passwordKeyVaultName'))]",
+    "extensionNameDE": "AzureDiskEncryption",
     "extensionVersion": "2.2",
     "encryptionOperation": "EnableEncryption",
     "keyVaultResourceID": "[resourceId(parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
     
   },
   "resources": [
-    
-    {
-      "name": "[variables('networkInterfaceName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
-      ],
-      "tags": {
-        "displayName": "BaseVMNIC"
-      },
-      "properties": {
-        "primary": true,
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              },
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
-              }
-            }
-          }
-        ]
-
-
-      }
-    
-    },
-    {
-      "name": "[variables('publicIpAddressName')]",
-      "Type": "Microsoft.Network/publicIpAddresses",
-      "apiVersion": "2018-08-01",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "BaseVMPublicIP"
-      },
-      "sku":{
-          "name":"Basic"
-      },
-      "Properties": {
-        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
-      }
-    },
     {
         "apiVersion": "2018-09-15",
         "Type": "Microsoft.DevTestLab/schedules",
-        "name": "[variables('policyName')]",
+        "name": "[variables('DeploymentNames').scheduleName]",
         "location": "[resourceGroup().location]",
         "dependsOn": [ "[variables('vmResourceId')]" ],
         "tags": {
@@ -176,13 +157,13 @@
         
       },
     {   
-        "name": "BackupConfig",
+        "name": "[variables('DeploymentNames').backup]",
         "type": "Microsoft.Resources/deployments",
         "apiVersion": "2017-05-10",
         "dependsOn": [
           "[resourceId('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
         ],
-        "resourceGroup": "StageGroup",
+        "resourceGroup": "[parameters('vaultResourceGroup')]",
         "properties":{
           "mode":"Incremental",
          "templateLink":{
@@ -204,6 +185,53 @@
          }
         }
         
+      },
+    {
+        "name": "[variables('DeploymentNames').vm]",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "properties":{
+          "mode":"Incremental",
+          "templateLink":{
+            "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/base-vm.json"
+          },
+          "parameters":{
+            "virtualMachineName": {
+              "value":"[parameters('virtualMachineName')]"
+            },
+            "virtualMachineSize": {
+                "value": "[parameters('virtualMachineSize')]"
+            },
+            "adminUsername": {
+              "value": "[parameters('adminUsername')]"
+            },
+            "adminPassword": {
+              "reference":{
+                "KeyVault":{
+                  "id":"[variables('passwordKeyVaultID')]"
+                },
+                "secrectname":"[parameters('passwordKeyVaultSecret')]"
+              }
+            },
+            "sku": {
+              "Value": "[parameters('sku')]"
+            },
+            "nicType":{
+              "Value": "[parameters('nicType')]"
+          },
+            "VNETResourceGroup":
+            {
+              "value": "[parameters('VNETResourceGroup')]"
+            },
+            "VNET": {
+              "Value": "[parameters('virtualNetworkName')]"
+            },
+            "subnetName":{
+              "value":"[parameters('subnetName')]"
+            }
+          }
+        }
+
       }
       
       
