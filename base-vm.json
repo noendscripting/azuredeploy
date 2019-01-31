@@ -47,6 +47,12 @@
     "subnetName":{
       "type":"string",
       "defaultValue": "BackendSubnet"
+    },
+    "vaultName" : {
+      "type":"string"
+    },
+    "backupPolicyDsiplayname" : {
+      "type": "string"
     }
 
 
@@ -134,6 +140,36 @@
       
 
 
+  },
+  {   
+    "name": "BackupConfig",
+    "type": "Microsoft.Resources/deployments",
+    "apiVersion": "2017-05-10",
+    "dependsOn": [
+      "[resourceId('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+    ],
+    "resourceGroup": "Baselab",
+    "properties":{
+      "mode":"Incremental",
+     "templateLink":{
+       "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/backup-template.json"
+     },
+     "parameters":{
+        "vaultName" : {
+          "value":"[parameters('vaultName')]"
+        },
+        "vmResourceID": {
+          "value": "[variables('vmResourceId')]"
+        },
+        "backupPolicyName" : {
+          "value": "[parameters('backupPolicyDsiplayname')]"
+        },
+        "virtualMachineName" :{
+          "value":"[parameters('virtualMachineName')]"
+        }
+     }
+    }
+    
   }
   ],
   "outputs": {
