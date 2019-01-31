@@ -125,7 +125,7 @@
             "valuue":"[parameters('VNETResourceGroup')]"
             },
           "VNET":{
-            "Value": "VNET02"
+            "Value": "[parameters('VNET')]"
           },
           "subnetName":{
             "Value": "[parameters('subnetName')]"
