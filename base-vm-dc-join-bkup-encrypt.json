@@ -136,7 +136,9 @@
         "Type": "Microsoft.DevTestLab/schedules",
         "name": "[variables('DeploymentNames').scheduleName]",
         "location": "[resourceGroup().location]",
-        "dependsOn": [ "[variables('vmResourceId')]" ],
+        "dependsOn": [ 
+          "[concat('Microsoft.Resources/deployments/',variables('DeploymentNames').vm)]"
+        ],
         "tags": {
           "displayName": "BaseVMShutdown-11:00pm"
         },
@@ -161,7 +163,7 @@
         "type": "Microsoft.Resources/deployments",
         "apiVersion": "2017-05-10",
         "dependsOn": [
-          "[resourceId('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+          "[concat('Microsoft.Resources/deployments/',variables('DeploymentNames').vm)]"
         ],
         "resourceGroup": "[parameters('vaultResourceGroup')]",
         "properties":{
@@ -210,7 +212,7 @@
                 "KeyVault":{
                   "id":"[variables('passwordKeyVaultID')]"
                 },
-                "secrectname":"[parameters('passwordKeyVaultSecret')]"
+                "secretname":"[parameters('passwordKeyVaultSecret')]"
               }
             },
             "sku": {

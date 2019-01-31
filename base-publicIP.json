@@ -12,7 +12,8 @@
     "variables": {
         "publicIpAddressName": "[concat(parameters('publicIPData').VmName,'PUBLICIP')]"
     },
-    "resources": [{
+    "resources": [
+        {
         "name": "[variables('publicIpAddressName')]",
         "Type": "Microsoft.Network/publicIpAddresses",
         "apiVersion": "2018-08-01",
