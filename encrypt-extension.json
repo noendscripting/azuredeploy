@@ -60,9 +60,7 @@
   },
 
   "resources": [
-
     {
-
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/', variables('extensionName'))]",
       "location": "[parameters('location')]",
