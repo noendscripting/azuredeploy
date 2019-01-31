@@ -22,7 +22,7 @@
     "v2Vm": "vm;iaasvmcontainerv2;",
     "protectionContainer": "[concat(variables('v2VmContainer'), resourceGroup().name, ';', parameters('virtualMachineName'))]",
     "protectedItem": "[concat(variables('v2Vm'),resourceGroup().name, ';', parameters('virtualMachineName') )]",
-    "backUpName":"[concat(parameters('vaultName'),'/',variables('backupFabric'),'/',variables('protectionContainer'),'/',variables('protectedItem'))]",
+    "backUpName":"[concat(parameters('vaultName'),'/',variables('backupFabric'),'/',variables('protectionContainer'),'/',variables('protectedItem'))]"
     },
     "resources": [
         {
