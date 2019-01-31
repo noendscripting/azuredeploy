@@ -7,7 +7,7 @@
     },
     "virtualMachineSize": {
       "type": "string",
-      "defaultValue": "A2_Standard"
+      "defaultValue": "Standard_A2"
     },
     "adminUsername": {
       "type": "string",
@@ -54,8 +54,7 @@
   "variables": {
     
     "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-    "vmNICDeployementName":"[concat(parameters('virtualMachineName'),'NIC',deployment().name)]",
-    "nicID":"reference(concat('Microsoft.Resources/deployments/',variables('vmNICDeployementName'))).outputs.idNIC.value]"
+    "vmNICDeployementName":"[concat(parameters('virtualMachineName'),'NIC',deployment().name)]"
   },
   "resources": [
     {
@@ -96,7 +95,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[variables('nicID')]"
+              "id": "[reference(concat('Microsoft.Resources/deployments/',variables('vmNICDeployementName'))).outputs.idNIC.value]"
             }
           ]
 
