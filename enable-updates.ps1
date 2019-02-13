@@ -23,7 +23,7 @@ If (($UpdateSearcher.QueryHistory(0,1)| select Date).Date -le (Get-Date).Add(-40
         $DownloadCollection.Add($update)
     }
     Write-Verbose "Downloading Updates" 
-    $Downloader = $Session.CreateUpdateDownloader() 
+    $Downloader = $UpdateSession.CreateUpdateDownloader() 
     $Downloader.Updates = $DownloadCollection 
     $Downloader.Download() 
     Write-verbose "Download complete."
@@ -37,7 +37,7 @@ If (($UpdateSearcher.QueryHistory(0,1)| select Date).Date -le (Get-Date).Add(-40
         }
 
     } 
-    $Installer = $Session.CreateUpdateInstaller() 
+    $Installer = $UpdateSession.CreateUpdateInstaller() 
     $Installer.Updates = $InstallCollection 
     $Results = $Installer.Install()
 
