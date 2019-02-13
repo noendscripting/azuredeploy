@@ -87,10 +87,7 @@
       },
       "volumeType": {
         "type": "string",
-        "defaultValue": "All",  
-        "metadata": {  
-          "description": "Type of the volume OS or Data to perform encryption operation"
-        }
+        "defaultValue": "All"
       },  
       "forceUpdateTag": {  
         "type": "string",  
@@ -205,12 +202,7 @@
             "value":"[parameters('forceUpdateTag')]"
           },
           "resizeOSDisk": {
-          "value":"[parameters('resizeOSDisk')]",
-            "metadata": {
-              "description": "Should the OS partition be resized to occupy full OS VHD before splitting system volume"
-            }
-      
-
+          "value":"[parameters('resizeOSDisk')]"
         }
       }
     }

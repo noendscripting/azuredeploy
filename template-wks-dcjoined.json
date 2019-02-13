@@ -50,6 +50,9 @@
     "virtualNetResourceGroupName": {
       "type": "string",
       "defaultValue": "NetworkSubnet"
+    },
+    "sku":{
+      "type": "string"
     }
 
   },
@@ -97,7 +100,7 @@
             "publisher": "MicrosoftVisualStudio",
             "offer": "Windows",
             //"sku": "Win7-SP1-Ent-N-x64",
-            "sku": "Windows-10-N-x64",
+            "sku": "[parameters('sku')]",
             
             "version": "latest"
           },

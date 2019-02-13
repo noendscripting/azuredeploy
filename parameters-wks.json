@@ -1,0 +1,41 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualMachineName": {
+      "value": "ContosoWKS"
+    },
+    "virtualMachineSize": {
+      "value": "Basic_A2"
+    },
+    "adminUsername": {
+      "value": "vadmin"
+    },
+    "virtualNetworkName": {
+      "value": "LimitedVnet"
+    },
+    "subnetName": {
+      "value": "FirstSubnet"
+    },
+    "adminPassword": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/202a9776-d703-4e12-991a-4363824c532c/resourceGroups/StageGroup/providers/Microsoft.KeyVault/vaults/ServerBuild"
+        },
+        "secretName": "defaultServerPass"
+      } 
+    },
+   "sku": {
+     "value":"Windows-10-N-x64"
+     },
+   "publicIpAddressType":{
+      "value":"Dynamic"
+      },
+    "dnsIp": {
+      "value": "10.10.29.225"
+    },
+    "domain": {
+      "value": "contosoad.com"
+    }
+  }
+}
