@@ -94,10 +94,10 @@ $Params = @{
      RegistrationUrl = 'https://eus2-agentservice-prod-1.azure-automation.net/accounts/7cbb540d-c20a-441b-ab00-d3fc02416f0c';
      RegistrationKey = 'tVjsObUIMUauIC8HUWwCuMK8c9UfyKhknRUoQdihQoHWYWs/vs2KG1AlSjGTBvUl3PkAJBEkO1ll6UXi0oRV+Q==';
      ComputerName = @('localhost');
-     NodeConfigurationName = 'DomainControllerConfig';
+     NodeConfigurationName = 'DomainControllerConfig.localhost';
      RefreshFrequencyMins = 30;
      ConfigurationModeFrequencyMins = 15;
-     RebootNodeIfNeeded = $False;
+     RebootNodeIfNeeded = $True;
      AllowModuleOverwrite = $False;
      ConfigurationMode = 'ApplyAndMonitor';
      ActionAfterReboot = 'ContinueConfiguration';
