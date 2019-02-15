@@ -175,7 +175,7 @@
     "nicName": "[parameters('vmName')]",
     "publicIPAddressName": "[parameters('vmName')]",
     "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]",
-    "scheduleName": "[concat('shutdown',parameters('vmName'))]"
+    "scheduleName": "[concat('shutdown','-',parameters('vmName'))]"
   },
   "resources": [
     //Diag Storage Account
