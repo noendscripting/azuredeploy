@@ -95,8 +95,8 @@ $Params = @{
      RegistrationKey = 'tVjsObUIMUauIC8HUWwCuMK8c9UfyKhknRUoQdihQoHWYWs/vs2KG1AlSjGTBvUl3PkAJBEkO1ll6UXi0oRV+Q==';
      ComputerName = @('localhost');
      NodeConfigurationName = 'DomainControllerConfig.localhost';
-     RefreshFrequencyMins = 30;
-     ConfigurationModeFrequencyMins = 15;
+     RefreshFrequencyMins = 15;
+     ConfigurationModeFrequencyMins = 5;
      RebootNodeIfNeeded = $True;
      AllowModuleOverwrite = $False;
      ConfigurationMode = 'ApplyAndMonitor';
