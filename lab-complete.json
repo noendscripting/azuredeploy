@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
-      "type": "string",
+      "type": "array",
       "metadata": {
         "description": "Name of the VM"
       }
@@ -17,7 +17,7 @@
       }
     },
     "osDiskVhdUri": {
-      "type": "string",
+      "type": "array",
       "metadata": {
         "description": "Uri of the existing VHD in ARM standard or premium storage"
       }
@@ -190,11 +190,13 @@
       "kind": "Storage",
       "properties": {}
     },
+
+    
     //Public IP address
     {
       "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
+      "name": "[concat('PublicIP',parameters('vmname')[copyIndex('pubaddressCopy')])]",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "PublicIPAddress"
@@ -202,16 +204,20 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
 
+      },
+      "copy": {
+          "name": "pubaddressCopy",
+          "count": "[length(parameters('vmName'))]"
       }
     },
     //NIC Resource
     {
       "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
+      "name": "[concat('NIC',parameters('vmname')[copyIndex('copyNIC')])]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "pubaddressCopy"
       ],
       "tags": {
         "displayName": "NetworkInterface"
@@ -223,7 +229,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('PublicIP',parameters('vmname')[copyIndex('copyNIC')]))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -231,6 +237,10 @@
             }
           }
         ]
+      },
+      "copy": {
+          "name": "copyNIC",
+          "count": "[length(parameters('vmName'))]"
       }
     },
     //VM Resource
@@ -243,7 +253,7 @@
         "displayName": "VirtualMachine"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "copyNIC"
       ],
       "properties": {
         "hardwareProfile": {
@@ -251,11 +261,11 @@
         },
         "storageProfile": {
           "osDisk": {
-            "name": "[concat(parameters('vmName'))]",
+            "name": "[concat(parameters('vmName')[copyIndex('vmCopy')])]",
             "osType": "[parameters('osType')]",
             "caching": "ReadWrite",
             "vhd": {
-              "uri": "[parameters('osDiskVhdUri')]"
+              "uri": "[parameters('osDiskVhdUri')[copyIndex('vmCopy')]]"
             },
             "createOption": "Attach"
           }
@@ -273,16 +283,20 @@
             "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
           }
         }
+      },
+      "copy": {
+          "name": "vmCopy",
+          "count": "[length(parameters('vmName'))]"
       }
     },
     //Custom Script Resource
     {
-         "name": "[concat(parameters('vmName'),'/','WindowsUPdate')]",
+         "name": "[concat(parameters('vmName')[copyIndex('CSCopy')],'/','WindowsUPdate')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "location": "[resourceGroup().Location]",
           "apiVersion": "2015-06-15",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+           "vmCopy"
           ],
           "tags": {
             "displayName": "BuildConfig"
@@ -298,15 +312,21 @@
               ],
               "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'enable-updates.ps1')]"
             }
+          },
+          "copy":
+          {
+            "name": "CSCopy",
+            "count": "[length(parameters('vmName'))]"
+
           }
       },
       {
         "apiVersion": "2018-09-15",
         "Type": "Microsoft.DevTestLab/schedules",
-        "name": "[variables('scheduleName')]",
+        "name": "[concat('shutdown-computevm-',parameters('vmName')[copyIndex('')])]",
         "location": "[resourceGroup().location]",
         "dependsOn": [ 
-          "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+          "vmCopy"
         ],
         "tags": {
           "displayName": "BaseVMShutdown"
@@ -324,6 +344,10 @@
           "dailyRecurrence": {
             "time": "[parameters('shutdownTime')]"
           }
+        },
+        "copy": {
+          "name": "scheduleCopy",
+          "count": "[length(parameters('vmName'))]"
         }
         
       }
