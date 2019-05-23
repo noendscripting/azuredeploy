@@ -108,7 +108,7 @@
       "properties":{
         "mode":"Incremental",
         "templateLink":{
-          "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/base-nic.json"
+          "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/base-nic-multiple.json"
         },
         "parameters":{
 
