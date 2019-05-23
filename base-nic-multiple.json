@@ -1,7 +1,6 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "apiProfile": "2015-06-15" ,
     "parameters": {
        
         "nicType":{
@@ -41,6 +40,7 @@
         "VnetID": "[resourceId(parameters('VNETResourceGroup'),'Microsoft.Network/virtualNetworks', parameters('VNET'))]",
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
     },
+
     "resources": [
         //Public IP
         {
@@ -75,6 +75,7 @@
             "condition":"[and(equals(parameters('nicType'),'Public'),not(greater(length(parameters('StatiIP')),0)),not(greater(length(parameters('DnsIPAddress')),0)))]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
               "[concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))]",
               "[variables('VnetID')]",
@@ -112,6 +113,7 @@
             "condition":"[and(equals(parameters('nicType'),'Private'),not(greater(length(parameters('StatiIP')),0)),not(greater(length(parameters('DnsIPAddress')),0)))]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[variables('VnetID')]",
                 "[variables('subnetRef')]"           
@@ -143,6 +145,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Public'),not(greater(length(parameters('StatiIP')),0)),greater(length(parameters('DnsIPAddress')),0))]",
             "location": "[resourceGroup().location]",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))]",
                 "[variables('VnetID')]",
@@ -181,6 +184,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Private'),not(greater(length(parameters('StatiIP')),0)),greater(length(parameters('DnsIPAddress')),0))]",
             "location": "[resourceGroup().location]",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[variables('VnetID')]",
                 "[variables('subnetRef')]"
@@ -217,6 +221,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Public'),greater(length(parameters('StatiIP')),0),greater(length(parameters('DnsIPAddress')),0))]",
             "location": "[resourceGroup().location]",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))]",
                 "[variables('VnetID')]",
@@ -257,6 +262,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Private'),greater(length(parameters('StatiIP')),0),greater(length(parameters('DnsIPAddress')),0))]",
             "location": "[resourceGroup().location]",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[variables('VnetID')]",
                 "[variables('subnetRef')]"
@@ -293,6 +299,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Public'),greater(length(parameters('StatiIP')),0),not(greater(length(parameters('DnsIPAddress')),0)))]",
             "location": "[resourceGroup().location]",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))]",
                 "[variables('VnetID')]",
@@ -327,6 +334,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Private'),greater(length(parameters('StatiIP')),0),not(greater(length(parameters('DnsIPAddress')),0)))]",
             "location": "[resourceGroup().location]",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[variables('VnetID')]",
                 "[variables('subnetRef')]"
