@@ -1,0 +1,366 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "apiProfile": "2018-06-01-profile" ,
+    "parameters": {
+       
+        "nicType":{
+            "type": "string",
+            "allowedValues": [
+                "Public",
+                "Private"
+            ]
+        },
+        "virtualMachineName": {
+            "type": "string"
+          },
+        "VNETResourceGroup": {
+          "type":"string",
+          "defaultValue": "BaseLab"
+          },
+        "VNET":{
+          "type": "string",
+          "defaultValue": "VNET02"
+          },
+        "subnetName":{
+            "type":"string",
+            "defaultValue": "BackendSubnet"
+          },
+          "DnsIPAddress":{
+              "type":"string",
+              "defaultValue": ""
+          },
+          "StatiIP" :{
+              "type": "string",
+              "defaultValue": ""
+          }
+    },
+    "variables": {
+        "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
+        "pubIPdeploymentName":"[concat(variables('networkInterfaceName'),'PIP',deployment().name)]",
+        "VnetID": "[resourceId(parameters('VNETResourceGroup'),'Microsoft.Network/virtualNetworks', parameters('VNET'))]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+    },
+    "resources": [
+        //Public IP
+        {
+            "name":"[concat(variables('pubIPdeploymentName'))]" ,
+            "condition":"[equals(parameters('nicType'),'Public')]",
+            "type": "Microsoft.Resources/deployments",
+            "tags":{
+                "DisplayName":"PublicIP-Deployement"
+            },
+            "properties":{
+                "mode":"Incremental",
+                "templateLink":{
+                    "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/base-publicIP.json"
+                },
+                "parameters":{
+                    "publicIPData":{
+                      "value":{
+                        "vmName":"[parameters('virtualMachineName')]",
+                        "Sku": "Basic",
+                        "Allocation":"Dynamic"
+                      }
+
+                    }
+                }
+            }
+
+        },
+        //NIC Public Dynamic IP No DNS
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "condition":"[and(equals(parameters('nicType'),'Public'),not(greater(length(parameters('StatiIP')),0)),not(greater(length(parameters('DnsIPAddress')),0)))]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+              "[concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))]",
+              "[variables('VnetID')]",
+              "[variables('subnetRef')]"
+            ],
+            "tags": {
+              "displayName": "NIC-PuD"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIPAddress": {
+                        "id": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))).outputs.publicIPAddressID.value]"
+                    }
+                  }
+                
+                }
+                
+              ]
+      
+      
+            }
+          
+        },
+        //NIC Private Dynamic IP No DNS
+        {
+            "name":  "[variables('networkInterfaceName')]",
+            "condition":"[and(equals(parameters('nicType'),'Private'),not(greater(length(parameters('StatiIP')),0)),not(greater(length(parameters('DnsIPAddress')),0)))]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('VnetID')]",
+                "[variables('subnetRef')]"           
+            ],
+            "tags": {
+              "displayName": "NIC-PrD"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Dynamic"
+                  }
+                }
+              ]
+      
+      
+            }
+          
+        },
+        //NIC Public Dynamic IP Custom DNS
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "condition":"[and(equals(parameters('nicType'),'Public'),not(greater(length(parameters('StatiIP')),0)),greater(length(parameters('DnsIPAddress')),0))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))]",
+                "[variables('VnetID')]",
+                "[variables('subnetRef')]"
+              
+            ],
+            "tags": {
+              "displayName": "NIC-PuDcD"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIpAddress": {
+                      "id": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))).outputs.publicIPAddressID.value]"
+                    }
+                  }
+                }
+              ],
+              "dnsSettings": {
+                "dnsServers": [
+                  "[parameters('DnsIPAddress')]"
+                ]
+              }
+            }
+        },
+        //NIC Private Dynamic IP Custom DNS
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "condition":"[and(equals(parameters('nicType'),'Private'),not(greater(length(parameters('StatiIP')),0)),greater(length(parameters('DnsIPAddress')),0))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('VnetID')]",
+                "[variables('subnetRef')]"
+            ],
+            "tags": {
+              "displayName": "NIC-PrDcD"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Dynamic"
+                    
+                  }
+                }
+                
+              ],
+              "dnsSettings": {
+                "dnsServers": [
+                  "[parameters('DnsIPAddress')]"
+                ]
+              }
+      
+            }
+        },
+        //NIC Public Static IP Custom DNS
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "condition":"[and(equals(parameters('nicType'),'Public'),greater(length(parameters('StatiIP')),0),greater(length(parameters('DnsIPAddress')),0))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))]",
+                "[variables('VnetID')]",
+                "[variables('subnetRef')]"
+            ],
+            "tags": {
+              "displayName": "NIC-PuScD"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetRef')[0]]"
+                    },
+                    "privateIPAllocationMethod": "Static",
+                    "privateIPAddress": "[parameters('StatiIP')]",
+                    "publicIpAddress": {
+                        "id": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))).outputs.publicIPAddressID.value]"
+                    }
+                  }
+                }
+              ],
+              "dnsSettings": {
+                "dnsServers": [
+                  "[parameters('DnsIPAddress')]"
+                ]
+              }
+
+      
+            }
+        },
+        //NIC Private Static IP Custom DNS
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "condition":"[and(equals(parameters('nicType'),'Private'),greater(length(parameters('StatiIP')),0),greater(length(parameters('DnsIPAddress')),0))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('VnetID')]",
+                "[variables('subnetRef')]"
+            ],
+            "tags": {
+              "displayName": "NIC-PrScD"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Static",
+                    "privateIPAddress": "[parameters('StatiIP')]"
+                    
+                  }
+                }
+              ],
+              "dnsSettings": {
+                "dnsServers": [
+                  "[parameters('DnsIPAddress')]"
+                ]
+              }
+      
+            }
+        },
+        //NIC Public Static IP NO DNS
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "condition":"[and(equals(parameters('nicType'),'Public'),greater(length(parameters('StatiIP')),0),not(greater(length(parameters('DnsIPAddress')),0)))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))]",
+                "[variables('VnetID')]",
+                "[variables('subnetRef')]"
+            ],
+            "tags": {
+              "displayName": "NIC-PuS"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Static",
+                    "privateIPAddress": "[parameters('StatiIP')]",
+                    "publicIpAddress": {
+                        "id": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))).outputs.publicIPAddressID.value]"
+                    }
+                  }
+                }
+              ]
+      
+            }
+        },
+        //NIC Private Static IP NO DNS
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "condition":"[and(equals(parameters('nicType'),'Private'),greater(length(parameters('StatiIP')),0),not(greater(length(parameters('DnsIPAddress')),0)))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('VnetID')]",
+                "[variables('subnetRef')]"
+            ],
+            "tags": {
+              "displayName": "NIC-PrS"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Static",
+                    "privateIPAddress": "[parameters('StatiIP')]"
+                    
+                  }
+                }
+              ]
+      
+            }
+        }
+    ],
+    "outputs": {
+        "idNIC":{
+            "type": "string",
+            "value": "[if(equals(parameters('nicType'),'Public'),resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'),'pb')),resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'),'pr')))]"
+        },
+        "publicNICdata":{
+          "type": "string",
+          "value": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))).outputs.publicIPAddressID.value]"
+        }
+    }
+}
+
