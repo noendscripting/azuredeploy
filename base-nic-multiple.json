@@ -1,7 +1,7 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "apiProfile": "2018-05-01" ,
+    "apiProfile": "2015-06-15" ,
     "parameters": {
        
         "nicType":{
@@ -47,6 +47,7 @@
             "name":"[concat(variables('pubIPdeploymentName'))]" ,
             "condition":"[equals(parameters('nicType'),'Public')]",
             "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
             "tags":{
                 "DisplayName":"PublicIP-Deployement"
             },
