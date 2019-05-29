@@ -61,6 +61,7 @@
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/',variables('vmNICDeployementName'))]"
       ],
       "tags": {
         "displayName": "BaseVM"
