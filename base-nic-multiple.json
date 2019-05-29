@@ -330,7 +330,7 @@
         },
         //NIC Private Static IP NO DNS
         {
-            "name": "[conacat(variables('networkInterfaceName'),'PrS')]",
+            "name": "[concat(variables('networkInterfaceName'),'PrS')]",
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Private'),greater(length(parameters('StatiIP')),0),not(greater(length(parameters('DnsIPAddress')),0)))]",
             "location": "[resourceGroup().location]",
