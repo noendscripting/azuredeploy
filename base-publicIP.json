@@ -32,7 +32,7 @@
     "outputs": {
         "publicIPAddressID":{
             "type": "string",
-            "value": "[resourceId('Microsoft.Network/publicIpAddresses',variables('publicIpAddressName'))]"
+            "value": "[resourceId('Microsoft.Network/publicIpAddresses',variables('publicIpAddressName'),'2018-08-01')]"
         }
     }
 
