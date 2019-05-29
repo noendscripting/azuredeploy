@@ -48,9 +48,6 @@
             "condition":"[equals(parameters('nicType'),'Public')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2017-05-10",
-            "tags":{
-                "DisplayName":"PublicIP-Deployement"
-            },
             "properties":{
                 "mode":"Incremental",
                 "templateLink":{
