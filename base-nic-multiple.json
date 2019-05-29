@@ -37,8 +37,8 @@
     "variables": {
         "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
         "pubIPdeploymentName":"[concat(variables('networkInterfaceName'),'PIP',deployment().name)]",
-        //"VnetID": "[resourceId(parameters('VNETResourceGroup'),'Microsoft.Network/virtualNetworks', parameters('VNET'))]",
-        //"subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+        "VnetID": "[resourceId(parameters('VNETResourceGroup'),'Microsoft.Network/virtualNetworks', parameters('VNET'))]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
     },
 
     "resources": [
