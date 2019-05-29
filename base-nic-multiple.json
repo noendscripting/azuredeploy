@@ -71,7 +71,7 @@
         },
         //NIC Public Dynamic IP No DNS
         {
-            "name": "[variables('networkInterfaceName')]",
+            "name": "[concat(variables('networkInterfaceName'),'PuD')]",
             "condition":"[and(equals(parameters('nicType'),'Public'),not(greater(length(parameters('StatiIP')),0)),not(greater(length(parameters('DnsIPAddress')),0)))]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
@@ -109,7 +109,7 @@
         },
         //NIC Private Dynamic IP No DNS
         {
-            "name":  "[variables('networkInterfaceName')]",
+            "name":  "[concat(variables('networkInterfaceName'),'PrD')]",
             "condition":"[and(equals(parameters('nicType'),'Private'),not(greater(length(parameters('StatiIP')),0)),not(greater(length(parameters('DnsIPAddress')),0)))]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
@@ -141,7 +141,7 @@
         },
         //NIC Public Dynamic IP Custom DNS
         {
-            "name": "[variables('networkInterfaceName')]",
+            "name": "[concat(variables('networkInterfaceName'),'PuDcD')]",
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Public'),not(greater(length(parameters('StatiIP')),0)),greater(length(parameters('DnsIPAddress')),0))]",
             "location": "[resourceGroup().location]",
@@ -180,7 +180,7 @@
         },
         //NIC Private Dynamic IP Custom DNS
         {
-            "name": "[variables('networkInterfaceName')]",
+            "name": "[concat(variables('networkInterfaceName'),'PrDcD')]",
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Private'),not(greater(length(parameters('StatiIP')),0)),greater(length(parameters('DnsIPAddress')),0))]",
             "location": "[resourceGroup().location]",
@@ -217,7 +217,7 @@
         },
         //NIC Public Static IP Custom DNS
         {
-            "name": "[variables('networkInterfaceName')]",
+            "name": "[concat(variables('networkInterfaceName'),'PuScD')]",
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Public'),greater(length(parameters('StatiIP')),0),greater(length(parameters('DnsIPAddress')),0))]",
             "location": "[resourceGroup().location]",
@@ -258,7 +258,7 @@
         },
         //NIC Private Static IP Custom DNS
         {
-            "name": "[variables('networkInterfaceName')]",
+            "name": "[concat(variables('networkInterfaceName'),'PrScD')]",
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Private'),greater(length(parameters('StatiIP')),0),greater(length(parameters('DnsIPAddress')),0))]",
             "location": "[resourceGroup().location]",
@@ -295,7 +295,7 @@
         },
         //NIC Public Static IP NO DNS
         {
-            "name": "[variables('networkInterfaceName')]",
+            "name": "[concat(variables('networkInterfaceName'),'PuS')]",
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Public'),greater(length(parameters('StatiIP')),0),not(greater(length(parameters('DnsIPAddress')),0)))]",
             "location": "[resourceGroup().location]",
@@ -330,7 +330,7 @@
         },
         //NIC Private Static IP NO DNS
         {
-            "name": "[variables('networkInterfaceName')]",
+            "name": "[conacat(variables('networkInterfaceName'),'PrS')]",
             "type": "Microsoft.Network/networkInterfaces",
             "condition":"[and(equals(parameters('nicType'),'Private'),greater(length(parameters('StatiIP')),0),not(greater(length(parameters('DnsIPAddress')),0)))]",
             "location": "[resourceGroup().location]",
