@@ -63,7 +63,6 @@
             "apiVersion": "2015-06-15",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-              "[concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))]"
             ],
             "tags": {
               "displayName": "PublicNIC"
@@ -79,7 +78,7 @@
                     },
                     "privateIPAllocationMethod": "Dynamic",
                     "publicIPAddress": {
-                        "id": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))).outputs.publicIPAddressID.value]"
+                        "id": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName')),'2017-05-10').outputs.publicIPAddressID.value]"
                     }
                   }
                 
@@ -128,7 +127,7 @@
         },
         "publicNICdata":{
           "type": "string",
-          "value": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName'))).outputs.publicIPAddressID.value]"
+          "value": "[if(equals(parameters('nicType'),'Private'),'none',reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName')),'2017-05-10').outputs.publicIPAddressID.value)]"
         }
     }
 }
