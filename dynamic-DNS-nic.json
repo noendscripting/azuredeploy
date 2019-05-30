@@ -1,0 +1,148 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+       
+        "nicType":{
+            "type": "string",
+            "allowedValues": [
+                "Public",
+                "Private"
+            ]
+        },
+        "virtualMachineName": {
+            "type": "string"
+          },
+        "VNETResourceGroup": {
+          "type":"string",
+          "defaultValue": "BaseLab"
+          },
+        "VNET":{
+          "type": "string",
+          "defaultValue": "VNET02"
+          },
+        "subnetName":{
+            "type":"string",
+            "defaultValue": "BackendSubnet"
+          },
+        "StaticIP":{
+            "type": "string"
+        },
+        "DnsIPAddress":{
+            "type":"string",
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
+        "pubIPdeploymentName":"[concat(variables('networkInterfaceName'),'PIP',deployment().name)]",
+        "VnetID": "[resourceId(parameters('VNETResourceGroup'),'Microsoft.Network/virtualNetworks', parameters('VNET'))]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+    },
+    "resources": [
+        {
+            "name":"[concat(variables('pubIPdeploymentName'))]" ,
+            "condition":"[equals(parameters('nicType'),'Public')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "properties":{
+                "mode":"Incremental",
+                "templateLink":{
+                    "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/base-publicIP.json"
+                },
+                "parameters":{
+                    "publicIPData":{
+                      "value":{
+                        "vmName":"[parameters('virtualMachineName')]",
+                        "Sku": "Basic",
+                        "Allocation":"Dynamic"
+                      }
+
+                    }
+                }
+            }
+
+        },
+        {
+            "name": "[concat(variables('networkInterfaceName'),'pb')]",
+            "condition":"[equals(parameters('nicType'),'Public')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+            ],
+            "tags": {
+              "displayName": "PublicNIC"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIPAddress": {
+                        "id": "[reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName')),'2017-05-10').outputs.publicIPAddressID.value]"
+                    }
+                  }
+                
+                }
+                
+              ],
+              "dnsSettings": {
+                "dnsServers": [
+                  "[parameters('DnsIPAddress')]"
+                ]
+              }
+            }
+          
+          },
+          {
+            "name":  "[concat(variables('networkInterfaceName'),'pr')]",
+            "condition":"[equals(parameters('nicType'),'Private')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [           
+            ],
+            "tags": {
+              "displayName": "PrivateNIC"
+            },
+            "properties": {
+              "primary": true,
+              "ipConfigurations": [
+                {
+                  "name": "ipconfig1",
+                  "properties": {
+                    "subnet": {
+                      "id": "[variables('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Dynamic"
+                  }
+                }
+              ],
+              "dnsSettings": {
+                "dnsServers": [
+                  "[parameters('DnsIPAddress')]"
+                ]
+              }
+      
+            }
+          
+          }
+    ],
+    "outputs": {
+        "idNIC":{
+            "type": "string",
+            "value": "[if(equals(parameters('nicType'),'Public'),resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'),'pb')),resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'),'pr')))]"
+        },
+        "publicNICdata":{
+          "type": "string",
+          "value": "[if(equals(parameters('nicType'),'Private'),'none',reference(concat('Microsoft.Resources/deployments/',variables('pubIPdeploymentName')),'2017-05-10').outputs.publicIPAddressID.value)]"
+        }
+    }
+}
+
