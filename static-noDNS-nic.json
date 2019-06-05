@@ -26,8 +26,13 @@
             "defaultValue": "BackendSubnet"
           },
         "StaticIP":{
-            "type": "string"
-        }
+            "type": "string",
+            "defaultValue": ""
+        },
+        "DnsIPAddress":{
+          "type":"string",
+          "defaultValue": ""
+      }
     },
     "variables": {
         "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",

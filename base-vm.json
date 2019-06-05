@@ -47,7 +47,15 @@
     "subnetName":{
       "type":"string",
       "defaultValue": "BackendSubnet"
-    }
+    },
+    "StaticIP":{
+      "type": "string",
+      "defaultValue": ""
+    },
+    "DnsIPAddress":{
+      "type":"string",
+      "defaultValue": ""
+  }
 
 
   },
@@ -127,7 +135,13 @@
           },
           "subnetName":{
             "Value": "[parameters('subnetName')]"
-          }
+          },
+          "StaticIP":{
+            "value": "[parameters('StaticIP')]"
+          },
+          "DnsIPAddress":{
+            "value": "[parameters('DnsIPAddress')]"
+        }
         }
       }
       
