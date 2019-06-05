@@ -17,7 +17,6 @@
     "adminPassword": {
       "type": "securestring"
     },
-    
     "sku": {
       "type": "string",
       "allowedValues": [
@@ -55,6 +54,9 @@
     "DnsIPAddress":{
       "type":"string",
       "defaultValue": ""
+  },
+  "nicTemplateLink": {
+    "type": "string"
   }
 
 
@@ -117,7 +119,7 @@
       "properties":{
         "mode":"Incremental",
         "templateLink":{
-          "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/base-nic-multiple.json"
+          "uri": "[parameters('nicTemplateLink')]"
         },
         "parameters":{
 
