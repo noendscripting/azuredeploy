@@ -56,7 +56,8 @@
       "defaultValue": ""
   },
   "nicTemplateLink": {
-    "type": "string"
+    "type": "string",
+    "defaultValue": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/base-nic.json"
   }
 
 

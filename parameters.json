@@ -11,7 +11,7 @@
     "adminUsername": {
       "value": "vadmin"
     },
-    "virtualNetworkName": {
+    "VNET": {
       "value": "VNET02"
     },
     "subnetName": {
@@ -25,19 +25,23 @@
         "secretName": "defaultServerPass"
       } 
     },
-    "dataDriveCount": {
-      "value": 2
-    },
-      "keyVaultName": {
+    "dataDiskProps": {
+      "value":[
+         128,
+         32,
+          4
+      ]
+    }//,
+      /* "keyVaultName": {
         "value": "ServerBuild"
       },
       "keyVaultResourceGroup": {  
         "value": "StageGroup",  
         "metadata": {  
           "description": "Resource group of the KeyVault"  
-        }  
-      },
-      "volumeType": {
+        }   */
+      }//,
+      /* "volumeType": {
         "value": "All",  
         "metadata": {  
           "description": "Type of the volume OS or Data to perform encryption operation"
@@ -66,12 +70,12 @@
         "publicIpAddressType":{
           "value":"Dynamic"
         }
-    }
+    } */
     //"dnsIp": {
     //  "value": "10.97.0.4"
     //},
     //"domain": {
     //  "value": "contosoad.com"
     //}
-  }
+  //}
 }

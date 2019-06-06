@@ -1,0 +1,32 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name":{
+            "type": "string"
+        },
+        "sku":{
+            "type": "string",
+            "defaultValue": "Standard_LRS"
+        },
+        "size":{
+            "type": "int"
+        }
+    },
+    "resources": [
+        {
+            "name":"[parameters('name')]",
+            "apiVersion": "2018-09-30",
+            "type": "Microsoft.Compute/disks",
+            "location":"[resourceGroup().location]",
+            "sku":{
+                "name":"[parameters('sku')]"
+            },
+            "properties":{
+                "diskSizeGB":"[parameters('size')]"
+            }
+        }
+
+    ],
+    "outputs": {}
+}
