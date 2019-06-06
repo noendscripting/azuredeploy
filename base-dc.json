@@ -2,10 +2,6 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "location": {
-      "type": "string",
-      "defaultValue": "EastUs2"
-    },
     "virtualMachineName": {
       "type": "string"
     },
@@ -17,7 +13,7 @@
       "type": "string",
       "defaultValue": "VADMIN"
     },
-    "virtualNetworkName": {
+    "VNET": {
       "type": "string",
       "defaultValue": "VNET02"
     },
@@ -38,42 +34,39 @@
       ],
       "defaultValue": "2012-R2-Datacenter"
     },
-    "publicIpAddressType": {
+    "nicType":{
       "type": "string",
-      "defaultValue": "Dynamic"
-    },
-    "time": {
-      "type": "string",
-      "defaultValue": "23:00"
-    },
-    "sasKey": {
-      "type": "string",
-      "defaultValue": "odhdtdt"
-    },
+      "allowedValues": [
+          "Public",
+          "Private"
+      ],
+      "defaultValue": "Public"
+  },
     "dataDriveCount": {
       "type": "int",
-      "minValue": 1
+      "minValue": 1,
+      "defaultValue": 1
     },
-    "dnsIp": {
-      "type": "string"
+    "VNETResourceGroup":
+    {
+      "type":"string",
+      "defaultValue": "BaseLab"
     },
-    "domain": {
-      "type": "string"
-    },
-    "virtualNetResourceGroupName": {
+    "StaticIP":{
       "type": "string",
-      "defaultValue": "NetworkSubnet"
-    }
+      "defaultValue": ""
+    },
+    "DnsIPAddress":{
+      "type":"string",
+      "defaultValue": ""
+  },
+  "nicTemplateLink": {
+    "type": "string"
+  }
 
   },
   "variables": {
-    "VnetID": "[resourceId(parameters('virtualNetResourceGroupName'),'Microsoft.Network/virtualNetworks', parameters('virtualNetworkname'))]",
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
-    "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
-    "publicIpAddressName": "[concat(parameters('virtualMachineName'),'PUBLICIP')]",
-    "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-    "BuildConfigScriptFileName": "Temp.ps1",
-    "StorageAccount": "https://101stagingacc.blob.core.windows.net"
+    "vmNICDeployementName":"[concat(parameters('virtualMachineName'),'NIC',deployment().name)]"
   },
   "resources": [
     {
@@ -82,7 +75,7 @@
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+        "[concat('Microsoft.Resources/deployments/',variables('vmNICDeployementName'))]"
       ],
       "tags": {
         "displayName": "BaseDC"
@@ -125,88 +118,55 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+              "id": "[reference(concat('Microsoft.Resources/deployments/',variables('vmNICDeployementName'))).outputs.idNIC.value]"
             }
           ]
 
         }
 
-      } //,
-      //"resources": [
-      //  {
-      //    "name": "BuildConfig",
-      //    "type": "extensions",
-      //    "location": "[parameters('location')]",
-      //    "apiVersion": "2015-06-15",
-      //    "dependsOn": [
-      //      "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
-      //    ],
-      //    "tags": {
-      //      "displayName": "BuildConfig"
-      //    },
-      //    "properties": {
-      //      "publisher": "Microsoft.Compute",
-      //      "type": "CustomScriptExtension",
-      //      "typeHandlerVersion": "1.9",
-      //      "autoUpgradeMinorVersion": true,
-      //      "settings": {
-      //        "fileUris": [
-      //          "[concat(variables('StorageAccount'), '/', variables('BuildConfigScriptFolder'), '/', variables('BuildConfigScriptFileName'), parameters('sasKey'))]"
-      //        ],
-      //        "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('BuildConfigScriptFileName'))]"
-      //      }
-      //    }
-      //  }
-      //]
+      } 
     },
 
     {
-      "name": "[variables('networkInterfaceName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2015-06-15",
-      "location": "[ resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
-      ],
-      "tags": {
-        "displayName": "BaseDCNIC"
-      },
-      "properties": {
-        "primary": true,
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              },
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
-              }
-            }
-          }
-        ]
+      "name": "[variables('vmNICDeployementName')]",
+      "apiVersion": "2017-05-10",
+      "type": "Microsoft.Resources/deployments",
+      "properties":{
+        "mode":"Incremental",
+        "templateLink":{
+          "uri": "[parameters('nicTemplateLink')]"
+        },
+        "parameters":{
 
-      }
-    },
-    {
-      "name": "[variables('publicIpAddressName')]",
-      "Type": "Microsoft.Network/publicIpAddresses",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "BaseDCPublicIP"
-      },
-      "Properties": {
-        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+          "nicType":{
+            "value":"[parameters('nicType')]"
+            },
+          "virtualMachineName": {
+            "value": "[parameters('virtualMachineName')]"
+            },
+          "VNETResourceGroup": {
+            "value":"[parameters('VNETResourceGroup')]"
+            },
+          "VNET":{
+            "Value": "[parameters('VNET')]"
+          },
+          "subnetName":{
+            "Value": "[parameters('subnetName')]"
+          },
+          "StaticIP":{
+            "value": "[parameters('StaticIP')]"
+          },
+          "DnsIPAddress":{
+            "value": "[parameters('DnsIPAddress')]"
+        }
+        }
       }
     }
   ],
   "outputs": {
-    "adminUsername": {
+    "vmResourceID": {
       "type": "string",
-      "value": "[parameters('adminUsername')]"
+      "value": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
     }
   }
 }
