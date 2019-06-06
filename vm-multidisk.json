@@ -72,25 +72,6 @@
     "vmNICDeployementName":"[concat(parameters('virtualMachineName'),'NIC',deployment().name)]"
   },
   "resources": [
-    //Disk Deploy
-    { "name": "[concat(deployment().name,parameters('virtualMachineName'),'-disk',add(copyIndex('serverbuild'),2))]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
-      "copy":{
-        "count":"[Length(parameters('dataDiskProps'))]",
-        "name": "serverbuild"
-      },
-      "properties":{
-        "templateLink":{
-          "uri": "[parameters('diskTemplateUri')]"
-        },
-        "parameters":{
-           "name":"disk",
-           "sku":"Standard_LRS",
-           "size":"[parameters('dataDiskProps')[copyIndex('serverbuild')]]"
-        }
-      }
-    },
     //VM Deploy
     {
       "name": "[parameters('virtualMachineName')]",
@@ -133,10 +114,8 @@
               "input": {
                 "name": "[concat(parameters('virtualMachineName'),'-disk',add(copyIndex('DataDisks'),2))]",
                 "lun": "[copyIndex('DataDisks')]",
-                "CreationOption":"attach",
-                "managedDisk":{
-                  "id":"[reference(concat('Microsoft.Resources/deployments/',deployment().name,parameters('virtualMachineName'),'-disk',add(copyIndex('DataDisks'),2))).ouputs.idDisk.Value]"
-                }
+                "CreateOption":"Empty",
+                "diskSizeGB":"[parameters('dataDiskProps')[copyIndex('DataDisks')]]"
               }
             }
           ]
@@ -154,7 +133,7 @@
 
       } 
     },
-
+    //NIC Provisioning 
     {
       "name": "[variables('vmNICDeployementName')]",
       "apiVersion": "2017-05-10",
