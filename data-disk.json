@@ -23,10 +23,18 @@
                 "name":"[parameters('sku')]"
             },
             "properties":{
-                "diskSizeGB":"[parameters('size')]"
+                "diskSizeGB":"[parameters('size')]",
+                "creationData":{
+                    "createOption":"Empty"
+                }
             }
         }
 
     ],
-    "outputs": {}
+    "outputs": {
+        "idDisk":{
+            "type": "string",
+            "value": "[resourceId('Microsoft.Compute/disks',parameters('name'))]"
+        }
+    }
 }

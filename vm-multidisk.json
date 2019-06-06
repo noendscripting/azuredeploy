@@ -61,6 +61,10 @@
   "nicTemplateLink": {
     "type": "string",
     "defaultValue": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/base-nic.json"
+  },
+  "diskTemplateUri":{
+    "type": "string",
+    "defaultValue": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/data-disk.json"
   }
 
   },
@@ -68,14 +72,26 @@
     "vmNICDeployementName":"[concat(parameters('virtualMachineName'),'NIC',deployment().name)]"
   },
   "resources": [
-    { "name": "",
+    //Disk Deploy
+    { "name": "[concat(deployment().name,parameters('virtualMachineName'),'-disk',add(copyIndex('serverbuild'),2))]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2017-05-10",
       "copy":{
-        "count":4,
+        "count":"[Length(parameters('dataDiskProps'))]",
         "name": "serverbuild"
       },
+      "properties":{
+        "templateLink":{
+          "uri": "[parameters('diskTemplateUri')]"
+        },
+        "parameters":{
+           "name":"disk",
+           "sku":"Standard_LRS",
+           "size":"[parameters('dataDiskProps')[copyIndex('serverbuild')]]"
+        }
+      }
     },
+    //VM Deploy
     {
       "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
@@ -115,9 +131,12 @@
               "name": "DataDisks",
               "count": "[Length(parameters('dataDiskProps'))]",
               "input": {
-                "diskSizeGB": "[parameters('dataDiskProps')[copyIndex('DataDisks')]]",
+                "name": "[concat(parameters('virtualMachineName'),'-disk',add(copyIndex('DataDisks'),2))]",
                 "lun": "[copyIndex('DataDisks')]",
-                "CreateOption": "Empty"
+                "CreationOption":"attach",
+                "managedDisk":{
+                  "id":"[reference(concat('Microsoft.Resources/deployments/',deployment().name,parameters('virtualMachineName'),'-disk',add(copyIndex('DataDisks'),2))).ouputs.idDisk.Value]"
+                }
               }
             }
           ]
