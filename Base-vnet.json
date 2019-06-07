@@ -9,111 +9,14 @@
     },
     "VNETPrefix": {
       "type": "string"
-    },
-    "VNETSubnet1Name": {
-      "type": "string"
-    },
-    "VNETSubnet1Prefix": {
-      "type": "string"
-    },
-    "VNETSubnet2Name": {
-      "type": "string"
-    },
-    "VNETSubnet2Prefix": {
-      "type": "string"
-    },
-    "NSGSubnet1": {
-      "type": "string"
-    },
-    "NSGSubnet2": {
-      "type": "string"
     }
    
    
   },
   "variables": {
-    "DCVnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('VNETname'))]",
-    "GatewaySubnetName": "GatewaySubnet"
-   
 },
   "resources": [
-    // NSG BE
-    {
-      "comments": "# NSG",
-      "name": "[parameters('NSGSubnet1')]",
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "default-allow-rdp-in",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "3389",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 1000,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "default-allow-winrm-in",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "5986",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 1500,
-              "direction": "Inbound"
-            }
-          }
-        ]
-      }
-    },
-    // NSG FE
-    {
-      "comments": "# NSG",
-      "name": "[parameters('NSGSubnet2')]",
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "default-allow-rdp-in",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "3389",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 1000,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "default-allow-winrm-in",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "5986",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 1500,
-              "direction": "Inbound"
-            }
-          }
-
-            ]
-          }
-    },
+  
     //VNET Settings
     {
       "name": "[parameters('VNETname')]",
@@ -121,8 +24,6 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/',parameters('NSGSubnet1'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/',parameters('NSGSubnet2'))]"
       ],
       "tags": {
         "displayName": "VNET"
@@ -134,32 +35,6 @@
           ]
         },
         "subnets": [
-          {
-            "name": "GatewaySubnet",
-            "properties": {
-              "addressPrefix": "[parameters('GatewaySubnetAdressPrefix')]"
-             
-            }
-          },
-          {
-            "name": "[parameters('VNETSubnet1Name')]",
-            "properties": {
-              "addressPrefix": "[parameters('VNETSubnet1Prefix')]",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('NSGSubnet1'))]"
-              }
-            }
-          },
-          {
-            "name": "[parameters('VNETSubnet2Name')]",
-            "properties": {
-              "addressPrefix": "[parameters('VNETSubnet2Prefix')]",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('NSGSubnet2'))]"
-              }
-            }
-
-          }
         ]
       }
     }
