@@ -40,7 +40,7 @@ Catch{
 
 # Get list of databases
 $Databases = $null
-$Databases = Get-AzSqlDatabase -ServerName $server -ResourceGroupName $ResourceGroup | ? { $_.DatabaseName -ne 'master' } | Select ResourceId, DatabaseName
+$Databases = Get-AzSqlDatabase -ServerName $server -ResourceGroupName $ResourceGroup | Where-Object { $_.DatabaseName -ne 'master' } | Select-Object ResourceId, DatabaseName
 
 if ($Databases -ne $null) {
     Write-Host "$($databases.count) databases found on server $($server)" -ForegroundColor DarkGreen
