@@ -18,11 +18,11 @@ DISCLAIMER
 
 
 $resourceAppIdURI = "https://graph.microsoft.com" #This will tell Azure AD which reosurce we are trying to access
-$ClientID = "b038f5a2-93d9-4a0f-bdf8-a5eb77ea0e1c"   #AKA Application ID
+$ClientID = "142a9d27-be19-44ca-bddd-8e0e0d4811c2"   #AKA Application ID
 $TenantName = "azurenow.onmicrosoft.com"             #Your Tenant Name
 $CredPrompt = "Auto"                                   #Auto, Always, Never, RefreshSession
 $redirectUri = "https://MicrosoftGraphNativeAppRedirect.com"                #Your Application's Redirect URI
-$Uri = "https://graph.microsoft.com/beta/users/" #The query you want to issue to Invoke a REST command with. 
+$Uri = 'https://graph.microsoft.com/v1.0/users?$select=displayName,givenName' #The query you want to issue to Invoke a REST command with. 
 #You can use look up Graph Api refrence for examples of  URIs searching for single user or selecting specific properties
 $Method = "Get"                                    #GET 
 #JSON is listed as an example if you decide to use PUT or PATCH methods via Grahp. You will need to pass $JSON into body parament in Invoke-RestMethod
