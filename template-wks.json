@@ -79,10 +79,7 @@
         "osProfile": {
           "computerName": "[concat(parameters('virtualMachineName'),copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "windowsConfiguration": {
-            "provisionVmAgent": "true"
-          }
+          "adminPassword": "[parameters('adminPassword')]"
         },
         "hardwareProfile": {
           "vmSize": "[parameters('virtualMachineSize')]"

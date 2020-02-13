@@ -1,0 +1,483 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1_v2"
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "vadmin"
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "Test@2016"
+    },
+    "toplevelForest": {
+      "type": "string",
+      "defaultValue": "contosoad.com"
+    },
+    "sccmVMName": {
+      "type": "string",
+      "defaultValue": "SCCM2017"
+    },
+    "sqlVMname": {
+      "type": "string",
+      "defaultValue": "SQL2014SCCM"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "101baselabstore"
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "VNET02"
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "BackendSubnet"
+    },
+    "dnsIP": {
+      "type": "array",
+      "defaultValue": [
+        "10.10.29.225"
+      ]
+    },
+    "publicIpAddressType": {
+      "type": "string",
+      "defaultValue": "Dynamic"
+    },
+    "OuPath": {
+      "type": "string",
+      "defaultValue": "OU=CompanyComputers;DC=contosoad;DC=com"
+
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      },
+      "defaultValue": "https://101stagingacc.blob.core.windows.net"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      },
+      "defaultValue": "?sv=2017-04-17&sr=c&sig=74Ddu3LuCw8jE6s6OTW7LLlBH7ZqYzs%2FlHU8bLmJqnM%3D&se=2018-02-14T23%3A28%3A37Z&sp=r"
+    },
+    "time": {
+      "type": "string",
+      "defaultValue": "23:00"
+
+    }
+
+  },
+  "variables": {
+    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkname'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+    "DSCrchiveFolder": "DSC",
+    "DSCArchiveFileName": "dsc.zip",
+    "ImagePublisher": "MicrosoftWindowsServer",
+    "ImageOffer": "WindowsServer",
+    "WindowsOSVersion": "2012-R2-Datacenter",
+    "OSDiskName": "OSDisk",
+    "sccmPublicIP": "[ concat(parameters('sccmVMName'), 'PublicIP')]",
+    "sccmCpubVMDNSName": "[concat(toLower(parameters('sccmVMName')),substring(uniqueString(resourceGroup().id),0,3))]",
+    "sqlPublicIP": "[ concat(parameters('sqlVMname'), 'PublicIP')]",
+    "sqlmCpubVMDNSName": "[concat(toLower(parameters('sqlVMname')),substring(uniqueString(resourceGroup().id),0,3))]",
+    "FrontEndSubnetRef": "[concat(variables('VnetID'), '/subnets/', parameters('subnetName'))]",
+    "WiNRM-SQLScriptFolder": "lab",
+    "WiNRM-SQLScriptFileName": "WiNRM-SQL.ps1",
+    "WiNRM-SCCMScriptFileName": "WiNRM-SCCM.ps1",
+    "WiNRM-SQLScriptSupportFiles": [ "Win8.1AndW2K12R2-KB3191564-x64.msu" ],
+    "policyName": "shutdown-computevm-"
+
+  },
+  "resources": [
+    // SSCM VM
+    {
+      "comments": "# SCCM VM",
+      "name": "[parameters('sccmVMName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('sccmVMName'),'NIC')]"
+      ],
+      "tags": {
+        "displayName": "SCCM"
+      },
+      "properties": {
+
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('sccmVMName')]",
+          "adminUsername": "[parameters('AdminUsername')]",
+          "adminPassword": "[parameters('AdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('ImagePublisher')]",
+            "offer": "[variables('ImageOffer')]",
+            "sku": "[variables('WindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "createOption": "Empty",
+              "diskSizeGB": "20",
+              "lun": 0
+            }
+          ]
+
+        },
+
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('sccmVMName'),'NIC'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        // Join domain - Json AD Domain Extension
+        {
+          "comments": "Join domain - JsonADDomainExtension",
+          "apiVersion": "2015-06-15",
+          "type": "extensions",
+          "name": "joinDomain",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('sccmVMName'))]",
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('sccmVMName'),'/extensions/WiNRM-SCCM')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+
+            "type": "JsonADDomainExtension",
+            "typeHandlerVersion": "1.0",
+            "settings": {
+              "Name": "[parameters('toplevelForest')]",
+              "OuPath": "[parameters('OuPath')]",
+              "User": "[concat(parameters('toplevelForest'), '\\', parameters('AdminUserName'))]",
+              "Restart": "true",
+              "Options": 3
+            },
+            "protectedsettings": {
+              "Password": "[parameters('AdminPassword')]"
+            }
+          }
+        },
+        {
+          "name": "WiNRM-SCCM",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('sccmVMName'))]"
+          ],
+          "tags": {
+            "displayName": "WiNRM-SCCM"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/WiNRM-SCCM.ps1"
+                //"[concat(parameters('_artifactsLocation'), '/', variables('WiNRM-SQLScriptFolder'), '/', variables('WiNRM-SQLScriptFileName'),parameters('_artifactsLocationSasToken'))]",
+                //"[concat(parameters('_artifactsLocation'), '/', variables('WiNRM-SQLScriptFolder'), '/', variables('WiNRM-SQLScriptSupportFiles')[0],parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./', variables('WiNRM-SCCMScriptFileName'))]"
+            }
+          }
+        }
+      ]
+    },
+    //SCCM Nic
+    {
+      "comments": "# SCCM NIC",
+      "name": "[concat(parameters('sccmVMName'),'NIC')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('sccmPublicIP'))]"
+      ],
+      "tags": {
+        "displayName": "SCCMNIC"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('FrontEndSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('sccmPublicIP'))]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": "[parameters('dnsIP')]"
+        }
+      }
+    },
+    //SCCM Public IP
+    {
+      "comments": "# SCCM Public IP",
+      "name": "[variables('sccmPublicIP')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "SCCMPublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "sccm2017"
+        }
+      }
+    },
+    // SQL VM
+    {
+      "comments": "# SQL VM",
+      "name": "[parameters('sqlVMname')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('sqlVMname'),'NIC')]"
+      ],
+      "tags": {
+        "displayName": "SQL"
+      },
+      "properties": {
+
+        "osProfile": {
+          "computerName": "[parameters('sqlVMname')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+
+        "hardwareProfile": {
+          "vmSize": "Standard_DS3_v2"
+        },
+        "storageProfile": {
+          "imageReference": {
+            //"publisher": "MicrosoftSQLServer",
+            //"offer": "SQL2014SP2-WS2012R2",
+            //"sku": "Standard",
+            "publisher": "[variables('ImagePublisher')]",
+            "offer": "[variables('ImageOffer')]",
+            "sku": "[variables('WindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "createOption": "Empty",
+              "lun": 0,
+              "diskSizeGB":"50"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('sqlVMname'),'NIC'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        // Join domain - Json AD Domain Extension
+        {
+          "comments": "Join domain - JsonADDomainExtension",
+          "apiVersion": "2015-06-15",
+          "type": "extensions",
+          "name": "joinDomain",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('sqlVMname'))]",
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('sqlVMname'),'/extensions/WiNRM-SQL')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+
+            "type": "JsonADDomainExtension",
+            "typeHandlerVersion": "1.3",
+            "settings": {
+              "Name": "[parameters('toplevelForest')]",
+              "OuPath": "[parameters('OuPath')]",
+              "User": "[concat(parameters('toplevelForest'), '\\', parameters('AdminUserName'))]",
+              "Restart": "true",
+              "Options": 3
+            },
+            "protectedsettings": {
+              "Password": "[parameters('AdminPassword')]"
+            }
+          }
+        },
+        {
+          "name": "WiNRM-SQL",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('sqlVMname'))]"
+          ],
+          "tags": {
+            "displayName": "WiNRM-SQL"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/WiNRM-SQL.ps1"
+                //"[concat(parameters('_artifactsLocation'), '/', variables('WiNRM-SQLScriptFolder'), '/', variables('WiNRM-SQLScriptFileName'),parameters('_artifactsLocationSasToken'))]",
+                //"[concat(parameters('_artifactsLocation'), '/', variables('WiNRM-SQLScriptFolder'), '/', variables('WiNRM-SQLScriptSupportFiles')[0],parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./', variables('WiNRM-SQLScriptFileName'))]"
+            }
+          }
+        }
+      ]
+    },
+    //SQL Nic
+    {
+      "comments": "# SQL NIC",
+      "name": "[concat(parameters('sqlVMname'),'NIC')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('sqlPublicIP'))]"
+      ],
+      "tags": {
+        "displayName": "SQLMNIC"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('FrontEndSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('sqlPublicIP'))]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": "[parameters('dnsIP')]"
+        }
+      }
+    },
+    //SQL Public IP
+    {
+      "comments": "# SQL Public IP",
+      "name": "[variables('sqlPublicIP')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "SQLMPublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[tolower('SQL2014SCCM')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-05-15",
+      "type": "Microsoft.DevTestLab/schedules",
+      "name": "[concat(variables('policyName'),parameters('sqlVMname'))]",
+      "tags": {
+        "displayName": "BaseVMShutdown-11:00pm-SQL"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('sqlVMname'))]"
+      ],
+      "properties": {
+        "status": "Enabled",
+        "timeZoneId": "Eastern Standard Time",
+        "taskType": "ComputeVmShutdownTask",
+        "notificationSettings": {
+          "status": "Disabled",
+          "timeInMinutes": 15,
+          "webhookUrl": null
+        },
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('sqlVMname'))]",
+        "dailyRecurrence": {
+          "time": "[parameters('time')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-05-15",
+      "type": "Microsoft.DevTestLab/schedules",
+      "name": "[concat(variables('policyName'),parameters('sccmVMName'))]",
+      "tags": {
+        "displayName": "BaseVMShutdown-11:00pm-SCCM2017"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('sccmVMName'))]"
+      ],
+      "properties": {
+        "status": "Enabled",
+        "timeZoneId": "Eastern Standard Time",
+        "taskType": "ComputeVmShutdownTask",
+        "notificationSettings": {
+          "status": "Disabled",
+          "timeInMinutes": 15,
+          "webhookUrl": null
+        },
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('sccmVMName'))]",
+        "dailyRecurrence": {
+          "time": "[parameters('time')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "RDP-FQDN": {
+      "type": "array",
+      "value": [
+        "[reference(resourceId('Microsoft.Network/publicIPAddresses/',variables('sccmPublicIP'))).DNSSettings.fqdn]",
+        "[reference(resourceId('Microsoft.Network/publicIPAddresses/',variables('sqlPublicIP'))).DNSSettings.fqdn]"
+      ]
+    }
+  }
+}
