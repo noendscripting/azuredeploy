@@ -75,6 +75,11 @@
         "virtualMachineImageOffer": {
             "type": "string",
             "defaultValue": "WindowsServer"
+        },
+        "AzureFirewallName": {
+            "type": "string",
+            "defaultValue": "MainFirewall"
+
         }
 
 
@@ -206,7 +211,7 @@
         {
             "type": "Microsoft.Network/azureFirewalls",
             "apiVersion": "2020-04-01",
-            "name": "[parameters('azureFirewallsName')]",
+            "name": "[parameters('azureFirewallName')]",
             "location": "southcentralus",
             "dependson":[
                 "[variables('hubFirewallSubnetId')]",
