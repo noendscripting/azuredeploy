@@ -5,6 +5,9 @@
     "virtualMachineName": {
       "type": "string"
     },
+    "virtualMachineLongname": {
+      "type": "string"
+    },
     "virtualMachineSize": {
       "type": "string",
       "defaultValue": "Standard_A2"
@@ -67,7 +70,7 @@
   },
   "resources": [
     {
-      "name": "[parameters('virtualMachineName')]",
+      "name": "[parameters('virtualMachineLongname')]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",

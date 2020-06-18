@@ -1,0 +1,194 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "EastUs2"
+    },
+    "virtualMachineName": {
+      "type": "string"
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Basic_A2"
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "VADMIN"
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "LimitedVnet"
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "Test@2016"
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "FirstSubnet"
+    },
+    "publicIpAddressType": {
+      "type": "string",
+      "defaultValue": "Dynamic"
+    },
+    "time": {
+      "type": "string",
+      "defaultValue": "23:00"
+    },
+    "vmCount": {
+      "type": "int",
+      "minValue": 1
+    },
+    "virtualNetResourceGroupName": {
+      "type": "string",
+      "defaultValue": "NetworkSubnet"
+    },
+    "vrtutalMachineSKU": {
+        "type": "string",
+        "defaultValue": "2019-Datacenter"
+     },
+    "virtualMachineImagePublisher": {
+        "type": "string",
+        "defaultValue": "MicrosoftWindowsServer"
+    },
+    "virtualMachineImageOffer": {
+        "type": "string",
+        "defaultValue": "WindowsServer"
+    }
+
+  },
+  "variables": {
+    "VnetID": "[resourceId(parameters('virtualNetResourceGroupName'),'Microsoft.Network/virtualNetworks', parameters('virtualNetworkname'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+    "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
+    "publicIpAddressName": "[concat(parameters('virtualMachineName'),'PUBLICIP')]",
+    "policyName": "[concat('shutdown-computevm-',parameters('virtualMachineName'))]",
+    "vmNicResoucreID":"[resourceId('Microsoft.Network/networkInterfaces',variables('networkInterfaceName'))]"  
+    
+  },
+  "resources": [
+    //VM NIC
+        {
+            "name": "[variables('networkInterfaceName')]",
+             "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('subnetRef')]"
+            ],
+            "tags": {
+                "displayName": "VMNIC"
+            },
+            "properties": {
+                "primary": true,
+                "ipConfigurations": [
+                {
+                    "name": "ipconfig1",
+                    "properties": {
+                    "subnet": {
+                        "id": "[variables('subnetRef')]"
+                    },
+                    "privateIPAllocationMethod": "Dynamic"
+                    }
+                }
+                ],
+                "dnsSettings": {
+
+                }
+
+            }
+        },
+        // VM Build
+        {
+            "name": "[parameters('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
+            "location": "[resourceGroup().location]",
+            
+            "dependsOn": [
+                "[variables('vmNicResoucreID')]"
+            ],
+            "tags": {
+                "displayName": "BaseVM"
+            },
+            "properties": {
+                "osProfile": {
+                "computerName": "[parameters('virtualMachineName')]",
+                "adminUsername": "[parameters('adminUsername')]",
+                "adminPassword": "[parameters('adminPassword')]"
+                },
+                "hardwareProfile": {
+                "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                "imageReference": {
+                    "publisher": "[parameters('virtualMachineImagePublisher')]",
+                    "offer": "[parameters('virtualMachineImageOffer')]",
+                    "sku": "[parameters('vrtutalMachineSKU')]",
+                    "version": "latest"
+                },
+                "osDisk": {
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                    "storageAccountType": "Standard_LRS"
+                    }
+                },
+                "dataDisks": []
+                },
+                "networkProfile": {
+                "networkInterfaces": [
+                    {
+                    "id": "[variables('vmNicResoucreID')]"
+                    }
+                ]
+
+                }
+
+            }
+        },
+    {
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "name": "[variables('publicIpAddressName')]",
+      "Properties": {
+        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+      },
+      "tags": {
+        "displayName": "BaseVMPublicIP"
+      },
+      "Type": "Microsoft.Network/publicIpAddresses"
+    },
+    {
+      "apiVersion": "2016-05-15",
+      "Type": "Microsoft.DevTestLab/schedules",
+      "name": "[variables('policyName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [ "vmLoop" ],
+      "tags": {
+        "displayName": "BaseVMShutdown-11:00pm"
+      },
+      "properties": {
+        "status": "Enabled",
+        "timeZoneId": "Eastern Standard Time",
+        "taskType": "ComputeVmShutdownTask",
+        "notificationSettings": {
+          "status": "Disabled",
+          "timeInMinutes": 15,
+          "webhookUrl": null
+        },
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines',parameters('virtualMachineName'))]",
+        "dailyRecurrence": {
+          "time": "[parameters('time')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "adminUsername": {
+      "type": "string",
+      "value": "[parameters('adminUsername')]"
+    }
+  }
+}
