@@ -349,7 +349,7 @@
                 "networkProfile": {
                 "networkInterfaces": [
                     {
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'),copyIndex()))]"
+                    "id": "[variables('vmNicResoucreID')]"
                     }
                 ]
 
