@@ -120,9 +120,6 @@
                         "name": "[variables('hubFirewallSubnetName')]",
                         "properties": {
                             "addressPrefix": "[variables('hubFirewallSubnetIpPrefix')]",
-                            "routeTable": {
-                                "id": "[variables('routeTableId')]"
-                            },
                             "serviceEndpoints": [],
                             "delegations": []
                         }
@@ -214,7 +211,8 @@
             "name": "[parameters('azureFirewallName')]",
             "location": "southcentralus",
             "dependson":[
-                "[variables('hubFirewallSubnetId')]",
+
+                "[variables('hubVnetid')]",
                 "[variables('hubFireWallPublicIPId')]"
 
             ],
