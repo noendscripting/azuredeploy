@@ -37,10 +37,6 @@
       "type": "string",
       "defaultValue": "23:00"
     },
-    "vmCount": {
-      "type": "int",
-      "minValue": 1
-    },
     "virtualNetResourceGroupName": {
       "type": "string",
       "defaultValue": "NetworkSubnet"
@@ -56,7 +52,43 @@
     "virtualMachineImageOffer": {
         "type": "string",
         "defaultValue": "WindowsServer"
-    }
+    },
+        "encryptionKeyVaultName": {
+            "type": "string",
+            "minLength":0
+        },
+      "encryptionKeyVaultResourceGroup": {  
+        "type": "string",  
+        "metadata": {  
+          "description": "Resource group of the KeyVault"  
+        }  
+      },
+      "volumeType": {
+        "type": "string",
+        "defaultValue": "All",
+        "allowedValues": [
+        "All",
+        "Data",
+        "OS"
+      ],
+      "metadata": {
+        "description": "Type of the volume OS or Data to perform encryption operation"
+      }
+      },  
+      "forceUpdateTag": {  
+        "type": "string",  
+        "defaultValue": "1.0",  
+        "metadata": {  
+          "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"  
+        }  
+      },
+      "resizeOSDisk": {
+        "type": "bool",
+        "defaultValue": false,
+        "metadata": {
+          "description": "Should the OS partition be resized to occupy full OS VHD before splitting system volume"
+        }
+      }
 
   },
   "variables": {
@@ -65,7 +97,12 @@
     "networkInterfaceName": "[concat(parameters('virtualMachineName'),'NIC')]",
     "publicIpAddressName": "[concat(parameters('virtualMachineName'),'PUBLICIP')]",
     "policyName": "[concat('shutdown-computevm-',parameters('virtualMachineName'))]",
-    "vmNicResoucreID":"[resourceId('Microsoft.Network/networkInterfaces',variables('networkInterfaceName'))]"  
+    "vmNicResoucreID":"[resourceId('Microsoft.Network/networkInterfaces',variables('networkInterfaceName'))]",
+    "DeploymentNames":{
+      "backup":"[concat(parameters('virtualMachineName'),'-BackupConfig')]",
+      "encryption":"[concat('encryption',parameters('virtualMachineName'))]"
+    }
+
     
   },
   "resources": [
@@ -148,47 +185,86 @@
 
             }
         },
-    {
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "name": "[variables('publicIpAddressName')]",
-      "Properties": {
-        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
-      },
-      "tags": {
-        "displayName": "BaseVMPublicIP"
-      },
-      "Type": "Microsoft.Network/publicIpAddresses"
-    },
-    {
-      "apiVersion": "2016-05-15",
-      "Type": "Microsoft.DevTestLab/schedules",
-      "name": "[variables('policyName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [ "vmLoop" ],
-      "tags": {
-        "displayName": "BaseVMShutdown-11:00pm"
-      },
-      "properties": {
-        "status": "Enabled",
-        "timeZoneId": "Eastern Standard Time",
-        "taskType": "ComputeVmShutdownTask",
-        "notificationSettings": {
-          "status": "Disabled",
-          "timeInMinutes": 15,
-          "webhookUrl": null
+        //Public IP
+        {
+          "apiVersion": "2015-06-15",
+          "location": "[parameters('location')]",
+          "name": "[variables('publicIpAddressName')]",
+          "Properties": {
+            "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+          },
+          "tags": {
+            "displayName": "BaseVMPublicIP"
+          },
+          "Type": "Microsoft.Network/publicIpAddresses"
         },
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines',parameters('virtualMachineName'))]",
-        "dailyRecurrence": {
-          "time": "[parameters('time')]"
+        //Shutdown Schedule
+        {
+          "apiVersion": "2018-09-15",
+          "type": "Microsoft.DevTestLab/schedules",
+          "name": "[variables('policyName')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [ 
+             "[concat('Microsoft.Compute/virtualMachines/',parameters('virtualMachineName'))]"
+             ],
+          "tags": {
+            "displayName": "BaseVMShutdown-11:00pm"
+          },
+          "properties": {
+            "status": "Enabled",
+            "timeZoneId": "Eastern Standard Time",
+            "taskType": "ComputeVmShutdownTask",
+            "notificationSettings": {
+              "status": "Disabled",
+              "timeInMinutes": 15,
+              "webhookUrl": null
+            },
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines',parameters('virtualMachineName'))]",
+            "dailyRecurrence": {
+              "time": "[parameters('time')]"
+            }
+          }
+        },
+        {
+          "condition":"[greater(length(parameters('encryptionKeyVaultName')),0)]",
+      "name": "[variables('DeploymentNames').encryption]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "tags":{
+        "DisplayName":"EncryptionEXT"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('virtualMachineName'))]"
+      ], 
+      "properties": {
+        "mode":"Incremental",
+        "templateLink":{
+          "uri": "https://raw.githubusercontent.com/noendscripting/azuredeploy/master/encrypt-extension.json"
+        },
+        "parameters":{
+          "vmName": {
+           "value":"[parameters('virtualMachineName')]"
+          },
+          "keyVaultName": {
+            "value":"[parameters('encryptionKeyVaultName')]"
+          },
+          "keyVaultResourceGroup": {
+            "value":"[parameters('encryptionKeyVaultResourceGroup')]"
+          },
+          "volumeType": {
+            "value":"[parameters('volumeType')]"
+          },
+          "forceUpdateTag": {
+            "value":"[parameters('forceUpdateTag')]"
+          },
+          "resizeOSDisk": {
+          "value":"[parameters('resizeOSDisk')]"
         }
       }
     }
+  }
   ],
   "outputs": {
-    "adminUsername": {
-      "type": "string",
-      "value": "[parameters('adminUsername')]"
-    }
+    
   }
 }

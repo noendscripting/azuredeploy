@@ -24,6 +24,11 @@
     "volumeType": {
       "type": "string",
       "defaultValue": "All",
+      "allowedValues": [
+        "All",
+        "Data",
+        "OS"
+      ],
       "metadata": {
         "description": "Type of the volume OS or Data to perform encryption operation"
       }
@@ -64,7 +69,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/', variables('extensionName'))]",
       "location": "[parameters('location')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-07-01",
       "properties": {
         "publisher": "Microsoft.Azure.Security",
         "type": "[variables('extensionName')]",

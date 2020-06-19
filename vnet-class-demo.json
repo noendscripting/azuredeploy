@@ -86,7 +86,6 @@
 
     },
     "variables":{
-        "routeTableId": "Microsoft.Network/routeTables',parameters('routeTableName'))]",
         "spokeVNETid": "[resourceId('Microsoft.Network/virtualNetworks',parameters('spokeVNETName'))]",
         "spokeSubnet1Id":"[concat(variables('spokeVnetid'),'/subnets/',parameters('spokeVNETSubnet1Name'))]",
         "hubVnetid": "[resourceId('Microsoft.Network/virtualNetworks',parameters('hubVNETName'))]",
@@ -102,7 +101,7 @@
         //Hub VNET
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2020-03-01",
+            "apiVersion": "2019-12-01",
             "comments": "Hub VNET with fist subnet",
             "name": "[parameters('hubVNETName')]",
             "location": "[resourceGroup().location]",
@@ -165,7 +164,7 @@
         //Hub-to-Spoke-Peer
         {
             "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
-            "apiVersion": "2020-03-01",
+            "apiVersion": "2019-12-01",
             "name": "[concat(parameters('hubVNETName'),'/',parameters('hubVNETName'),'-to-',parameters('spokeVNETName'))]",
             "comments":"Hub-to-Spoke-Peer",
             "dependsOn": [
@@ -186,7 +185,7 @@
         //Spoke-to-Hub-Peer
         {
             "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
-            "apiVersion": "2020-03-01",
+            "apiVersion": "2019-12-01",
             "name": "[concat(parameters('spokeVNETName'),'/',parameters('spokeVNETName'), '-to-',parameters('hubVNETName'))]",
             "comments":"Spoke-to-Hub-Peer",
             "dependsOn": [
@@ -207,7 +206,7 @@
         //Hub Firewall
         {
             "type": "Microsoft.Network/azureFirewalls",
-            "apiVersion": "2020-04-01",
+            "apiVersion": "2019-12-01",
             "name": "[parameters('azureFirewallName')]",
             "location": "southcentralus",
             "dependson":[
@@ -247,7 +246,7 @@
         //FireWall Public IP
         {
             "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2020-04-01",
+            "apiVersion": "2019-12-01",
             "name": "[parameters('MainFirewallPIPname')]",
             "location": "southcentralus",
             "tags":{
@@ -282,7 +281,7 @@
         {
             "name": "[variables('vmNICName')]",
              "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2019-12-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[variables('spokeVNETid')]"
