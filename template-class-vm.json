@@ -4,14 +4,14 @@
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "EastUs2"
+      "defaultValue": "southcenralus"
     },
     "virtualMachineName": {
       "type": "string"
     },
     "virtualMachineSize": {
       "type": "string",
-      "defaultValue": "Basic_A2"
+      "defaultValue": "Standard_B1ls"
     },
     "adminUsername": {
       "type": "string",
@@ -19,7 +19,7 @@
     },
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "LimitedVnet"
+      "defaultValue": "hub-vnet"
     },
     "adminPassword": {
       "type": "securestring",
@@ -27,7 +27,7 @@
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "FirstSubnet"
+      "defaultValue": "sharedSubnet"
     },
     "publicIpAddressType": {
       "type": "string",
@@ -39,7 +39,7 @@
     },
     "virtualNetResourceGroupName": {
       "type": "string",
-      "defaultValue": "NetworkSubnet"
+      "defaultValue": "Demo-RG"
     },
     "vrtutalMachineSKU": {
         "type": "string",
@@ -58,7 +58,8 @@
             "minLength":0
         },
       "encryptionKeyVaultResourceGroup": {  
-        "type": "string",  
+        "type": "string",
+        "minLength":0,
         "metadata": {  
           "description": "Resource group of the KeyVault"  
         }  
