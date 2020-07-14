@@ -1,0 +1,1109 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "intervalSeconds": {
+            "type": "int",
+            "metadata": {
+                "defenition":"Data sample interval the higher the interval the higher the cost of Log Analytics workspace"
+            }
+
+        },
+        "workspaceName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "definition":"Location of the workspace resource susch e.g eastus, wetsus "
+            }
+        }
+
+    },
+    "variables": {
+        "counter": [
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesABBrowsessec",
+    "InstanceName": "*",
+    "CounterName": "AB Browses/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesABClientSessions",
+    "InstanceName": "*",
+    "CounterName": "AB Client Sessions"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesLDAPClientSessions",
+    "InstanceName": "*",
+    "CounterName": "LDAP Client Sessions"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesLDAPActiveThreads",
+    "InstanceName": "*",
+    "CounterName": "LDAP Active Threads"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesLDAPWritessec",
+    "InstanceName": "*",
+    "CounterName": "LDAP Writes/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesLDAPSearchessec",
+    "InstanceName": "*",
+    "CounterName": "LDAP Searches/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesLDAPUDPoperationssec",
+    "InstanceName": "*",
+    "CounterName": "LDAP UDP operations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDSSearchsuboperationssec",
+    "InstanceName": "*",
+    "CounterName": "DS Search sub-operations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDSDirectoryWritessec",
+    "InstanceName": "*",
+    "CounterName": "DS Directory Writes/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDSSearchesOther",
+    "InstanceName": "*",
+    "CounterName": "DS % Searches Other"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDSSearchesfromLSA",
+    "InstanceName": "*",
+    "CounterName": "DS % Searches from LSA"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDSDirectorySearchessec",
+    "InstanceName": "*",
+    "CounterName": "DS Directory Searches/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDSDirectoryReadssec",
+    "InstanceName": "*",
+    "CounterName": "DS Directory Reads/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesLDAPSuccessfulBindssec",
+    "InstanceName": "*",
+    "CounterName": "LDAP Successful Binds/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesLDAPBindTime",
+    "InstanceName": "*",
+    "CounterName": "LDAP Bind Time"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMMembershipChangessec",
+    "InstanceName": "*",
+    "CounterName": "SAM Membership Changes/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMDisplayInformationQueriessec",
+    "InstanceName": "*",
+    "CounterName": "SAM Display Information Queries/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMEnumerationssec",
+    "InstanceName": "*",
+    "CounterName": "SAM Enumerations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMTransitiveMembershipEvaluationssec",
+    "InstanceName": "*",
+    "CounterName": "SAM Transitive Membership Evaluations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMNonTransitiveMembershipEvaluationssec",
+    "InstanceName": "*",
+    "CounterName": "SAM Non-Transitive Membership Evaluations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMDomainLocalGroupMembershipEvaluationssec",
+    "InstanceName": "*",
+    "CounterName": "SAM Domain Local Group Membership Evaluations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMUniversalGroupMembershipEvaluationssec",
+    "InstanceName": "*",
+    "CounterName": "SAM Universal Group Membership Evaluations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMGlobalGroupMembershipEvaluationssec",
+    "InstanceName": "*",
+    "CounterName": "SAM Global Group Membership Evaluations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMGCEvaluationssec",
+    "InstanceName": "*",
+    "CounterName": "SAM GC Evaluations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDSClientBindssec",
+    "InstanceName": "*",
+    "CounterName": "DS Client Binds/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesABANRsec",
+    "InstanceName": "*",
+    "CounterName": "AB ANR/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesABPropertyReadssec",
+    "InstanceName": "*",
+    "CounterName": "AB Property Reads/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesABSearchessec",
+    "InstanceName": "*",
+    "CounterName": "AB Searches/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesABMatchessec",
+    "InstanceName": "*",
+    "CounterName": "AB Matches/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesABProxyLookupssec",
+    "InstanceName": "*",
+    "CounterName": "AB Proxy Lookups/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesATQThreadsTotal",
+    "InstanceName": "*",
+    "CounterName": "ATQ Threads Total"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesATQThreadsLDAP",
+    "InstanceName": "*",
+    "CounterName": "ATQ Threads LDAP"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesATQThreadsOther",
+    "InstanceName": "*",
+    "CounterName": "ATQ Threads Other"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesLDAPNewConnectionssec",
+    "InstanceName": "*",
+    "CounterName": "LDAP New Connections/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesLDAPNewSSLConnectionssec",
+    "InstanceName": "*",
+    "CounterName": "LDAP New SSL Connections/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMAccountGroupEvaluationLatency",
+    "InstanceName": "*",
+    "CounterName": "SAM Account Group Evaluation Latency"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSAMResourceGroupEvaluationLatency",
+    "InstanceName": "*",
+    "CounterName": "SAM Resource Group Evaluation Latency"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesATQOutstandingQueuedRequests",
+    "InstanceName": "*",
+    "CounterName": "ATQ Outstanding Queued Requests"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesATQRequestLatency",
+    "InstanceName": "*",
+    "CounterName": "ATQ Request Latency"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesATQEstimatedQueueDelay",
+    "InstanceName": "*",
+    "CounterName": "ATQ Estimated Queue Delay"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesTombstonesGarbageCollectedsec",
+    "InstanceName": "*",
+    "CounterName": "Tombstones Garbage Collected/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesTombstonesVisitedsec",
+    "InstanceName": "*",
+    "CounterName": "Tombstones Visited/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesNTLMBindssec",
+    "InstanceName": "*",
+    "CounterName": "NTLM Binds/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesNegotiatedBindssec",
+    "InstanceName": "*",
+    "CounterName": "Negotiated Binds/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDigestBindssec",
+    "InstanceName": "*",
+    "CounterName": "Digest Binds/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSimpleBindssec",
+    "InstanceName": "*",
+    "CounterName": "Simple Binds/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesExternalBindssec",
+    "InstanceName": "*",
+    "CounterName": "External Binds/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesFastBindssec",
+    "InstanceName": "*",
+    "CounterName": "Fast Binds/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesBasesearchessec",
+    "InstanceName": "*",
+    "CounterName": "Base searches/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesSubtreesearchessec",
+    "InstanceName": "*",
+    "CounterName": "Subtree searches/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDatabaseaddssec",
+    "InstanceName": "*",
+    "CounterName": "Database adds/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDatabasemodifyssec",
+    "InstanceName": "*",
+    "CounterName": "Database modifys/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "directoryServices",
+    "Name": "directoryServicesDatabasedeletessec",
+    "InstanceName": "*",
+    "CounterName": "Database deletes/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "database",
+    "Name": "databaseDatabaselsassVersionbucketsallocated",
+    "InstanceName": "Database",
+    "CounterName": "Version buckets allocated"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "database",
+    "Name": "databaseDatabaselsassDatabaseCacheMissessec",
+    "InstanceName": "Database",
+    "CounterName": "Database Cache Misses/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "database",
+    "Name": "databaseDatabaselsassDatabaseCacheHit",
+    "InstanceName": "Database",
+    "CounterName": "Database Cache % Hit"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "database",
+    "Name": "databaseDatabaselsassDatabaseCacheSizeMB",
+    "InstanceName": "Database",
+    "CounterName": "Database Cache Size (MB)"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "database",
+    "Name": "databaseDatabaselsassSessionsInUse",
+    "InstanceName": "Database",
+    "CounterName": "Sessions In Use"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "DNS",
+    "Name": "DNSDynamicUpdateReceivedsec",
+    "InstanceName": "*",
+    "CounterName": "Dynamic Update Received/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "DNS",
+    "Name": "DNSRecursiveQueriessec",
+    "InstanceName": "*",
+    "CounterName": "Recursive Queries/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "DNS",
+    "Name": "DNSRecursiveQueryFailuresec",
+    "InstanceName": "*",
+    "CounterName": "Recursive Query Failure/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "DNS",
+    "Name": "DNSSecureUpdateReceivedsec",
+    "InstanceName": "*",
+    "CounterName": "Secure Update Received/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "DNS",
+    "Name": "DNSTCPQueryReceivedsec",
+    "InstanceName": "*",
+    "CounterName": "TCP Query Received/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "DNS",
+    "Name": "DNSTCPResponseSentsec",
+    "InstanceName": "*",
+    "CounterName": "TCP Response Sent/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "DNS",
+    "Name": "DNSTotalQueryReceivedsec",
+    "InstanceName": "*",
+    "CounterName": "Total Query Received/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "DNS",
+    "Name": "DNSTotalResponseSentsec",
+    "InstanceName": "*",
+    "CounterName": "Total Response Sent/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "DNS",
+    "Name": "DNSUDPQueryReceivedsec",
+    "InstanceName": "*",
+    "CounterName": "UDP Query Received/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "DNS",
+    "Name": "DNSUDPResponseSentsec",
+    "InstanceName": "*",
+    "CounterName": "UDP Response Sent/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryCommittedBytesInUse",
+    "InstanceName": "*",
+    "CounterName": "% Committed Bytes In Use"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryAvailableMBytes",
+    "InstanceName": "*",
+    "CounterName": "Available MBytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryCacheBytes",
+    "InstanceName": "*",
+    "CounterName": "Cache Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryCommitLimit",
+    "InstanceName": "*",
+    "CounterName": "Commit Limit"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryCommittedBytes",
+    "InstanceName": "*",
+    "CounterName": "Committed Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryDemandZeroFaultssec",
+    "InstanceName": "*",
+    "CounterName": "Demand Zero Faults/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryFreeZeroPageListBytes",
+    "InstanceName": "*",
+    "CounterName": "Free & Zero Page List Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryFreeSystemPageTableEntries",
+    "InstanceName": "*",
+    "CounterName": "Free System Page Table Entries"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryModifiedPageListBytes",
+    "InstanceName": "*",
+    "CounterName": "Modified Page List Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryPagesInputsec",
+    "InstanceName": "*",
+    "CounterName": "Pages Input/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryPagesOutputsec",
+    "InstanceName": "*",
+    "CounterName": "Pages Output/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryPagessec",
+    "InstanceName": "*",
+    "CounterName": "Pages/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryPoolNonpagedBytes",
+    "InstanceName": "*",
+    "CounterName": "Pool Nonpaged Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryPoolPagedBytes",
+    "InstanceName": "*",
+    "CounterName": "Pool Paged Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemorySystemCacheResidentBytes",
+    "InstanceName": "*",
+    "CounterName": "System Cache Resident Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Memory",
+    "Name": "MemoryTransitionPagesRePurposedsec",
+    "InstanceName": "*",
+    "CounterName": "Transition Pages RePurposed/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Network Interface",
+    "Name": "NetworkInterfaceBytesTotalsec",
+    "InstanceName": "*",
+    "CounterName": "Bytes Total/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Network Interface",
+    "Name": "NetworkInterfaceCurrentBandwidth",
+    "InstanceName": "*",
+    "CounterName": "Current Bandwidth"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Network Interface",
+    "Name": "NetworkInterfaceBytesReceivedSec",
+    "InstanceName": "*",
+    "CounterName": "Bytes Received/Sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Network Interface",
+    "Name": "NetworkInterfaceBytesSentsec",
+    "InstanceName": "*",
+    "CounterName": "Bytes Sent/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Network Interface",
+    "Name": "NetworkInterfaceOffloadedConnections",
+    "InstanceName": "*",
+    "CounterName": "Offloaded Connections"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Network Interface",
+    "Name": "NetworkInterfaceOutputQueueLength",
+    "InstanceName": "*",
+    "CounterName": "Output Queue Length"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Network Interface",
+    "Name": "NetworkInterfaceTCPActiveRSCConnections",
+    "InstanceName": "*",
+    "CounterName": "TCP Active RSC Connections"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Network Interface",
+    "Name": "NetworkInterfaceTCPRSCAveragePacketSize",
+    "InstanceName": "*",
+    "CounterName": "TCP RSC Average Packet Size"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Netlogon",
+    "Name": "NetlogonTotal",
+    "InstanceName": "_Total",
+    "CounterName": "*"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Paging File",
+    "Name": "PagingFileUsage",
+    "InstanceName": "*",
+    "CounterName": "% Usage"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "PhysicalDisk",
+    "Name": "PhysicalDiskIdleTime",
+    "InstanceName": "*",
+    "CounterName": "% Idle Time"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "PhysicalDisk",
+    "Name": "PhysicalDiskAvgDiskQueueLength",
+    "InstanceName": "*",
+    "CounterName": "Avg. Disk Queue Length"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "PhysicalDisk",
+    "Name": "PhysicalDiskAvgDisksecRead",
+    "InstanceName": "*",
+    "CounterName": "Avg. Disk sec/Read"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "PhysicalDisk",
+    "Name": "PhysicalDiskAvgDisksecWrite",
+    "InstanceName": "*",
+    "CounterName": "Avg. Disk sec/Write"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "PhysicalDisk",
+    "Name": "PhysicalDiskCurrentDiskQueueLength",
+    "InstanceName": "*",
+    "CounterName": "Current Disk Queue Length"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "PhysicalDisk",
+    "Name": "PhysicalDiskDiskTransferssec",
+    "InstanceName": "*",
+    "CounterName": "Disk Transfers/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "PhysicalDisk",
+    "Name": "PhysicalDiskSplitIOSec",
+    "InstanceName": "*",
+    "CounterName": "Split IO/Sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Process",
+    "Name": "ProcessProcessorTime",
+    "InstanceName": "*",
+    "CounterName": "% Processor Time"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Process",
+    "Name": "ProcessHandleCount",
+    "InstanceName": "*",
+    "CounterName": "Handle Count"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Process",
+    "Name": "ProcessIDProcess",
+    "InstanceName": "*",
+    "CounterName": "ID Process"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Process",
+    "Name": "ProcessIODataOperationssec",
+    "InstanceName": "*",
+    "CounterName": "IO Data Operations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Process",
+    "Name": "ProcessIOOtherOperationssec",
+    "InstanceName": "*",
+    "CounterName": "IO Other Operations/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "process",
+    "Name": "processPoolPagedBytes",
+    "InstanceName": "*",
+    "CounterName": "Pool Paged Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "process",
+    "Name": "processPoolNonpagedBytes",
+    "InstanceName": "*",
+    "CounterName": "Pool Nonpaged Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Process",
+    "Name": "ProcessPrivateBytes",
+    "InstanceName": "*",
+    "CounterName": "Private Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Process",
+    "Name": "ProcessThreadCount",
+    "InstanceName": "*",
+    "CounterName": "Thread Count"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Process",
+    "Name": "ProcessWorkingSet",
+    "InstanceName": "*",
+    "CounterName": "Working Set"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Process",
+    "Name": "ProcessVirtualBytes",
+    "InstanceName": "*",
+    "CounterName": "Virtual Bytes"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor",
+    "Name": "ProcessorIdleTime",
+    "InstanceName": "*",
+    "CounterName": "% Idle Time"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor",
+    "Name": "ProcessorPrivilegedTime",
+    "InstanceName": "*",
+    "CounterName": "% Privileged Time"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor",
+    "Name": "ProcessorProcessorTime",
+    "InstanceName": "*",
+    "CounterName": "% Processor Time"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor",
+    "Name": "ProcessorUserTime",
+    "InstanceName": "*",
+    "CounterName": "% User Time"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor",
+    "Name": "ProcessorInterruptTime",
+    "InstanceName": "*",
+    "CounterName": "% Interrupt Time"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor",
+    "Name": "ProcessorDPCTime",
+    "InstanceName": "*",
+    "CounterName": "% DPC Time"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor",
+    "Name": "ProcessorInterruptsSec",
+    "InstanceName": "*",
+    "CounterName": "Interrupts/Sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor",
+    "Name": "ProcessorDPCRate",
+    "InstanceName": "*",
+    "CounterName": "DPC Rate"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor",
+    "Name": "ProcessorDPCsQueuedSec",
+    "InstanceName": "*",
+    "CounterName": "DPCs Queued/Sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor Information",
+    "Name": "ProcessorInformationofMaximumFrequency",
+    "InstanceName": "*",
+    "CounterName": "% of Maximum Frequency"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Processor Information",
+    "Name": "ProcessorInformationParkingStatus",
+    "InstanceName": "*",
+    "CounterName": "Parking Status"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Redirector",
+    "Name": "RedirectorPacketssec",
+    "InstanceName": "*",
+    "CounterName": "Packets/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Redirector",
+    "Name": "RedirectorServerSessions",
+    "InstanceName": "*",
+    "CounterName": "Server Sessions"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Redirector",
+    "Name": "RedirectorServerDisconnects",
+    "InstanceName": "*",
+    "CounterName": "Server Disconnects"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Redirector",
+    "Name": "RedirectorServerReconnects",
+    "InstanceName": "*",
+    "CounterName": "Server Reconnects"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Redirector",
+    "Name": "RedirectorServerSessionsHung",
+    "InstanceName": "*",
+    "CounterName": "Server Sessions Hung"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Server",
+    "Name": "ServerLogonTotal",
+    "InstanceName": "*",
+    "CounterName": "Logon Total"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Server",
+    "Name": "ServerPoolNonpagedFailures",
+    "InstanceName": "*",
+    "CounterName": "Pool Nonpaged Failures"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Server",
+    "Name": "ServerPoolPagedFailures",
+    "InstanceName": "*",
+    "CounterName": "Pool Paged Failures"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Server",
+    "Name": "ServerServerSessions",
+    "InstanceName": "*",
+    "CounterName": "Server Sessions"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Server Work Queues",
+    "Name": "ServerWorkQueuesAvailableWorkItems",
+    "InstanceName": "*",
+    "CounterName": "Available Work Items"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Server Work Queues",
+    "Name": "ServerWorkQueuesBytesTransferredsec",
+    "InstanceName": "*",
+    "CounterName": "Bytes Transferred/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Server Work Queues",
+    "Name": "ServerWorkQueuesCurrentClients",
+    "InstanceName": "*",
+    "CounterName": "Current Clients"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Server Work Queues",
+    "Name": "ServerWorkQueuesQueueLength",
+    "InstanceName": "*",
+    "CounterName": "Queue Length"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "System",
+    "Name": "SystemContextSwitchessec",
+    "InstanceName": "*",
+    "CounterName": "Context Switches/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "System",
+    "Name": "SystemProcessorQueueLength",
+    "InstanceName": "*",
+    "CounterName": "Processor Queue Length"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "System",
+    "Name": "SystemSystemCallssec",
+    "InstanceName": "*",
+    "CounterName": "System Calls/sec"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "TCPv4",
+    "Name": "TCPv4ConnectionsActive",
+    "InstanceName": "*",
+    "CounterName": "Connections Active"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "TCPv4",
+    "Name": "TCPv4ConnectionsEstablished",
+    "InstanceName": "*",
+    "CounterName": "Connections Established"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "TCPv4",
+    "Name": "TCPv4ConnectionFailures",
+    "InstanceName": "*",
+    "CounterName": "Connection Failures"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "TCPv4",
+    "Name": "TCPv4ConnectionReset",
+    "InstanceName": "*",
+    "CounterName": "Connection Reset"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "TCPv6",
+    "Name": "TCPv6ConnectionsActive",
+    "InstanceName": "*",
+    "CounterName": "Connections Active"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "TCPv6",
+    "Name": "TCPv6ConnectionsEstablished",
+    "InstanceName": "*",
+    "CounterName": "Connections Established"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "TCPv6",
+    "Name": "TCPv6ConnectionFailures",
+    "InstanceName": "*",
+    "CounterName": "Connection Failures"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "TCPv6",
+    "Name": "TCPv6ConnectionReset",
+    "InstanceName": "*",
+    "CounterName": "Connection Reset"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Security System-Wide Statistics",
+    "Name": "SecuritySystemWideStatisticsKerberosAuthentications",
+    "InstanceName": "*",
+    "CounterName": "Kerberos Authentications"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Security System-Wide Statistics",
+    "Name": "SecuritySystemWideStatisticsNTLMAuthentications",
+    "InstanceName": "*",
+    "CounterName": "NTLM Authentications"
+  },
+  {
+    "intervalSeconds": "[parameters('intervalSeconds')]",
+    "ObjectName": "Event Tracing for Windows Session",
+    "Name": "EventTracingforWindowsSessionEventlogSecurityEventsLoggedpersec",
+    "InstanceName": "Eventlog-Security",
+    "CounterName": "Events Logged per sec"
+  }
+]
+
+
+
+    },
+    "resources": [
+        {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2020-03-01-preview",
+            "name": "[parameters('workspaceName')]",
+            "location": "[parameters('location')]"
+        },
+        {   "commnent":"Copy job will create counters in batches of 5 to avoid throttling errors",
+            "copy": {
+                "count": "[length(variables('counter'))]",
+                "name": "AddCounterCopy",
+                "mode": "serial",
+                "batchSize": 5
+            },
+            "apiVersion": "2020-03-01-preview",
+            "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+            "name": "[concat(parameters('workspaceName'),'/',variables('counter')[copyIndex()].Name)]",
+            "kind": "WindowsPerformanceCounter",
+            "properties": {
+                "objectName": "[variables('counter')[copyIndex('AddCounterCopy')].ObjectName]",
+                "instanceName": "[variables('counter')[copyIndex('AddCounterCopy')].instanceName]",
+                "intervalSeconds": "[parameters('intervalSeconds')]",
+                "counterName": "[variables('counter')[copyIndex('AddCounterCopy')].counterName]"
+            }
+        }
+
+
+    ]
+
+}

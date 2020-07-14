@@ -17,7 +17,7 @@ DISCLAIMER
 #Requires -Modules @{ ModuleName="AzureAD"; ModuleVersion="2.0.2.16"}
 
 
-$resourceAppIdURI = "https://graph.microsoft.com" #This will tell Azure AD which reosurce we are trying to access
+$resourceAppIdURI = "https://graph.microsoft.com/.default" #This will tell Azure AD which reosurce we are trying to access
 $ClientID = "142a9d27-be19-44ca-bddd-8e0e0d4811c2"   #AKA Application ID
 $TenantName = "azurenow.onmicrosoft.com"             #Your Tenant Name
 $CredPrompt = "Auto"                                   #Auto, Always, Never, RefreshSession

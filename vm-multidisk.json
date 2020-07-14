@@ -10,7 +10,7 @@
     },
     "virtualMachineSize": {
       "type": "string",
-      "defaultValue": "Standard_D2_v2"
+      "defaultValue": "Standard_B2s"
     },
     "adminUsername": {
       "type": "string",
@@ -33,9 +33,10 @@
       "allowedValues": [
         "2012-R2-Datacenter",
         "2016-Datacenter",
-        "2008-R2-SP1"
+        "2008-R2-SP1",
+        "2019-Datacenter"
       ],
-      "defaultValue": "2012-R2-Datacenter"
+      "defaultValue": "2019-Datacenter"
     },
     "nicType":{
       "type": "string",
