@@ -1,10 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "metadata":{
-        "comments":"The template is designed to be deployed into a workspace with no windows perfoamnce counters added to avoid confilcts and Bad Request errors."
-
-    },
     "parameters": {
         "intervalSeconds": {
             "type": "int",
@@ -229,7 +225,6 @@
             "location": "[parameters('location')]"
         },
         {
-            "commnent": "Copy job will create counters in batches of 5 to avoid throttling errors",
             "copy": {
                 "count": "[length(variables('counter'))]",
                 "name": "AddCounterCopy",

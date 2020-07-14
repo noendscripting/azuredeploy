@@ -1084,7 +1084,7 @@
             "name": "[parameters('workspaceName')]",
             "location": "[parameters('location')]"
         },
-        {   "commnent":"Copy job will create counters in batches of 5 to avoid throttling errors",
+        {   
             "copy": {
                 "count": "[length(variables('counter'))]",
                 "name": "AddCounterCopy",
