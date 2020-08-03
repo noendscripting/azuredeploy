@@ -17,12 +17,12 @@ DISCLAIMER
 #Requires -Modules @{ ModuleName="AzureAD"; ModuleVersion="2.0.2.16"}
 
 
-$resourceAppIdURI = "https://testingauth101.azurewebsites.net" #This will tell Azure AD which reosurce we are trying to access
-$ClientID = "a20400e2-c10a-4c93-aa81-a9ad0654656f"   #AKA Application ID
-$TenantName = "amrtoday.onmicrosoft.com"             #Your Tenant Name
+$resourceAppIdURI = "https://graph.microsoft.com/.default" #This will tell Azure AD which reosurce we are trying to access
+$ClientID = "ecc181a9-d06a-482a-b124-bb538549316f"   #AKA Application ID
+$TenantName = "azurenow.onmicrosoft.com"             #Your Tenant Name
 $CredPrompt = "Auto"                                   #Auto, Always, Never, RefreshSession
-$redirectUri = "https://api101.portal.azure-api.net/docs/services/acessremoteapi/console/oauth2/authorizationcode/callback"                #Your Application's Redirect URI
-$Uri = "https://graph.microsoft.com/beta/users/" #The query you want to issue to Invoke a REST command with. 
+$redirectUri = "https://localhost"                #Your Application's Redirect URI
+$Uri = "https://graph.microsoft.com/.default" #The query you want to issue to Invoke a REST command with. 
 #You can use look up Graph Api refrence for examples of  URIs searching for single user or selecting specific properties
 $Method = "Get"                                    #GET 
 #JSON is listed as an example if you decide to use PUT or PATCH methods via Grahp. You will need to pass $JSON into body parament in Invoke-RestMethod

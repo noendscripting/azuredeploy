@@ -18,10 +18,10 @@ DISCLAIMER
 
 
 $resourceAppIdURI = "https://graph.microsoft.com/.default" #This will tell Azure AD which reosurce we are trying to access
-$ClientID = "142a9d27-be19-44ca-bddd-8e0e0d4811c2"   #AKA Application ID
+$ClientID = "ecc181a9-d06a-482a-b124-bb538549316f"   #AKA Application ID
 $TenantName = "azurenow.onmicrosoft.com"             #Your Tenant Name
 $CredPrompt = "Auto"                                   #Auto, Always, Never, RefreshSession
-$redirectUri = "https://MicrosoftGraphNativeAppRedirect.com"                #Your Application's Redirect URI
+$redirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient"                #Your Application's Redirect URI
 $Uri = 'https://graph.microsoft.com/v1.0/users?$select=displayName,givenName' #The query you want to issue to Invoke a REST command with. 
 #You can use look up Graph Api refrence for examples of  URIs searching for single user or selecting specific properties
 $Method = "Get"                                    #GET 
@@ -71,10 +71,10 @@ if ($authResult.Status -eq "Faulted") {
     write-host "error encountered terminating script"
     exit
 }
- 
+$authResult.CreateAuthorizationHeader()
 #Querying Azure AD
 
-Write-Progress -Id 1 -Activity "Executing query: $Uri" -CurrentOperation "Invoking MS Graph API"
+<#Write-Progress -Id 1 -Activity "Executing query: $Uri" -CurrentOperation "Invoking MS Graph API"
 #Creating request header
 $Header = @{
     'Content-Type'  = 'application\json'
@@ -110,4 +110,4 @@ if ($Method -eq "Patch") {
 Write-Progress -Id 1 -Activity "Executing query: $Uri" -Completed
 
 Return $QueryResults
-
+#>
