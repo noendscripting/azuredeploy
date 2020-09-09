@@ -15,28 +15,29 @@
     or lawsuits, including attorneys’ fees, that arise or result from the use or distribution of the Sample Code.
     Please note: None of the conditions outlined in the disclaimer above will supersede the terms and conditions contained within
     the Premier Customer Services Description.
-.Parameter
-    $vaultName
-    [Parameter(Madatory = $true)]
-    [string]$vaultRG,
-    [Parameter(Madatory = $true)]
-    [string]$vmName,
-    [Parameter(Madatory = $true)]
-    [string]$targetVnetname,
-    [Parameter(Madatory = $true)]
-    [string]$newVMname,
-    [Parameter(Madatory = $true)]
-    [string]$vmRG,
-    [Parameter(Madatory = $true)]
-    [string]$storageAccountName ,
-    [Parameter(Madatory = $true)]
-    [string]$storageAccountRG ,
-    [Parameter(Madatory = $true)]
-    [string]$targetSubnetName ,
-    [Parameter(Madatory = $true)]
-    [int]$backupDateLookbackDays,
-    [Parameter(Madatory = $true)]
-    [string]$recoveryRGname
+.Parameter vaultName
+ Name of the backup vault where backup is tored
+.Parameter vaultRG
+ Name of the Resource Group where backup vault is located
+.Parameter vmName
+ Name of the backed up VM
+.Parameter targetVnetname
+ Name of the VNET where recovered VM will be stored
+.Parameter newVMname
+ Name of the restored VM
+.Parameter vmRG
+ Resource group for original VM
+.Parameter storageAccountName
+ Name of the storage account where restore configuration will be stored
+.Parameter storageAccountRG
+ Name of the Resource Group for the storage account
+.Parameter targetSubnetName
+ Name of the subnet used by retsored VM
+.Parameter backupDateLookbackDays
+ Number of day search for backup versions
+.Parameter recoveryRGname
+ Resource Group name where all recovered componenets will be stored
+
 
   
    
@@ -54,8 +55,6 @@ param(
     [string]$targetVnetname,
     [Parameter(Madatory = $true)]
     [string]$newVMname,
-    [Parameter(Madatory = $true)]
-    [string]$vmRG,
     [Parameter(Madatory = $true)]
     [string]$storageAccountName ,
     [Parameter(Madatory = $true)]
@@ -77,15 +76,14 @@ $InformationPreference = 'Continue'
 
 # comment this section out if running out side of Azure Automation
 $connection = Get-AutomationConnection -Name AzureRunAsConnection
-while(!($connectionResult) -and ($logonAttempt -le 10))
-{
+while (!($connectionResult) -and ($logonAttempt -le 10)) {
     $LogonAttempt++
     # Logging in to Azure...
     $connectionResult = Connect-AzAccount `
-                            -ServicePrincipal `
-                            -Tenant $connection.TenantID `
-                            -ApplicationId $connection.ApplicationID `
-                            -CertificateThumbprint $connection.CertificateThumbprint
+        -ServicePrincipal `
+        -Tenant $connection.TenantID `
+        -ApplicationId $connection.ApplicationID `
+        -CertificateThumbprint $connection.CertificateThumbprint
 
     Start-Sleep -Seconds 30
 }
