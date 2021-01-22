@@ -135,7 +135,7 @@ Write-Information "Downloading and saving restore configuration"
 Set-AzCurrentStorageAccount -Name $storageAccountName -ResourceGroupName $storageAccountRG 
 Get-AzStorageBlobContent -Container $containerName -Blob $configBlobName -Destination $destinationPath -force 
 $recoverySettings = ((Get-Content -Path $destinationPath -Raw -Encoding Unicode)).TrimEnd([char]0x00) | ConvertFrom-Json
-#end region
+#endregion
 
 #region VM OS and StorageBuild
 Write-Information "Configuring VM with size $($recoverySettings.'properties.hardwareProfile'.vmSize)"
@@ -152,7 +152,7 @@ foreach ($dd in $obj.'properties.StorageProfile'.DataDisks) {
     Clear-Variable disk
 }
 
-#end region
+#endregion
 #region Creating VM Network configuration 
 Write-Information "Setting virtual network data"
 $vnet = Get-AzVirtualNetwork -Name $targetVnetname
@@ -170,7 +170,7 @@ Write-Information "Setting up DNS servers 168.63.129.16 and 169.254.169.254 and 
 $nic.DnsSettings.DnsServers.Add("168.63.129.16")
 $nic.DnsSettings.DnsServers.Add("169.254.169.254")
 $nic | Set-AzNetworkInterface
-#end region 
+#endregion 
 
 #region Creating VM
 Write-Information "Linking network card to the VM Build data "
@@ -185,7 +185,7 @@ New-AzVM -ResourceGroupName $recoveryRGName -Location $recoveryRGlocation -VM $v
 Write-Information "Saving remove from Domain and system rename script"
 Set-Content -Path "$($env:TEMP)\temp.ps1" -Value "remove-computer -force`nrename-computer -newName $($newVMname)" -Force
 
-write-InWrite-Information "Running system rename script inside the vm"
+write-Information "Running system rename script inside the vm"
 Invoke-AzVMRunCommand -ResourceGroupName $recoveryRGname -VMName $newVMname -CommandId 'RunPowerShellScript' -ScriptPath "$($env:TEMP)\temp.ps1"
 
 Write-Information "Clearing DNS settings back to production "
@@ -194,6 +194,6 @@ $nic | Set-AzNetworkInterface
 
 Write-Information "Restarting VM for rename operation to complete"
 Restart-AzVM -Name $newVMname -ResourceGroupName $recoveryRGname
-#end region
+#endregion
 
 
