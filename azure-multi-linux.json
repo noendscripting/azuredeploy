@@ -1,0 +1,447 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminuser": {
+            "type": "string",
+            "defaultValue": "vadmin"
+        }
+    },
+    "variables": {
+        "vm": [
+            {
+                "offer": "cis-centos-7-v2-1-1-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-centos7-l1",
+                "version": "3.0.4"
+            },
+            {
+                "offer": "cis-centos-7-v2-1-1-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-centos7-l1",
+                "version": "3.0.5"
+            },
+            {
+                "offer": "cis-centos-7-v2-1-1-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-centos7-l1",
+                "version": "3.0.6"
+            },
+            {
+                "offer": "cis-centos-7-v2-1-1-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-centos7-l1",
+                "version": "3.0.7"
+            },
+            {
+                "offer": "cis-centos-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-centos8-l1",
+                "version": "1.0.10"
+            },
+            {
+                "offer": "cis-centos-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-centos8-l1",
+                "version": "1.0.11"
+            },
+            {
+                "offer": "cis-centos-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-centos8-l1",
+                "version": "1.0.12"
+            },
+            {
+                "offer": "cis-debian-linux-10-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-debian10-l1",
+                "version": "1.0.6"
+            },
+            {
+                "offer": "cis-debian-linux-10-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-debian10-l1",
+                "version": "1.0.7"
+            },
+            {
+                "offer": "cis-debian-linux-10-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-debian10-l1",
+                "version": "1.0.8"
+            },
+            {
+                "offer": "cis-debian-linux-9-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-debian9-l1",
+                "version": "1.0.17"
+            },
+            {
+                "offer": "cis-debian-linux-9-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-debian9-l1",
+                "version": "1.0.18"
+            },
+            {
+                "offer": "cis-debian-linux-9-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-debian9-l1",
+                "version": "1.0.19"
+            },
+            {
+                "offer": "cis-oracle-linux-7-v2-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-oracle7-l1",
+                "version": "3.0.6"
+            },
+            {
+                "offer": "cis-oracle-linux-7-v2-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-oracle7-l1",
+                "version": "3.0.7"
+            },
+            {
+                "offer": "cis-oracle-linux-7-v2-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-oracle7-l1",
+                "version": "3.0.8"
+            },
+            {
+                "offer": "cis-oracle-linux-7-v2-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-oracle7-l1-for-cis",
+                "version": "3.0.6"
+            },
+            {
+                "offer": "cis-oracle-linux-7-v2-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-oracle7-l1-for-cis",
+                "version": "3.0.7"
+            },
+            {
+                "offer": "cis-oracle-linux-7-v2-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-oracle7-l1-for-cis",
+                "version": "3.0.8"
+            },
+            {
+                "offer": "cis-oracle-linux-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-oracle8-l1",
+                "version": "1.0.10"
+            },
+            {
+                "offer": "cis-oracle-linux-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-oracle8-l1",
+                "version": "1.0.11"
+            },
+            {
+                "offer": "cis-oracle-linux-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-oracle8-l1",
+                "version": "1.0.9"
+            },
+            {
+                "offer": "cis-oracle-linux-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cisoraclelinux8benchmarkl1forcisinternal",
+                "version": "1.0.10"
+            },
+            {
+                "offer": "cis-oracle-linux-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cisoraclelinux8benchmarkl1forcisinternal",
+                "version": "1.0.11"
+            },
+            {
+                "offer": "cis-oracle-linux-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cisoraclelinux8benchmarkl1forcisinternal",
+                "version": "1.0.9"
+            },
+            {
+                "offer": "cis-rhel-7-l2",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel7-l2",
+                "version": "3.0.3"
+            },
+            {
+                "offer": "cis-rhel-7-l2",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel7-l2",
+                "version": "3.0.4"
+            },
+            {
+                "offer": "cis-rhel-7-l2",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel7-l2",
+                "version": "3.0.5"
+            },
+            {
+                "offer": "cis-rhel-7-stig",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel-7-stig",
+                "version": "1.0.6"
+            },
+            {
+                "offer": "cis-rhel-7-stig",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel-7-stig",
+                "version": "1.0.7"
+            },
+            {
+                "offer": "cis-rhel-7-stig",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel-7-stig",
+                "version": "1.0.8"
+            },
+            {
+                "offer": "cis-rhel-7-v2-2-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel7-l1",
+                "version": "3.0.2"
+            },
+            {
+                "offer": "cis-rhel-7-v2-2-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel7-l1",
+                "version": "3.0.3"
+            },
+            {
+                "offer": "cis-rhel-7-v2-2-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel7-l1",
+                "version": "3.0.4"
+            },
+            {
+                "offer": "cis-rhel-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel8-l1",
+                "version": "1.0.11"
+            },
+            {
+                "offer": "cis-rhel-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel8-l1",
+                "version": "1.0.12"
+            },
+            {
+                "offer": "cis-rhel-8-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-rhel8-l1",
+                "version": "1.0.13"
+            },
+            {
+                "offer": "cis-suse-linux-12-v2-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-suse12-l1",
+                "version": "2.0.7"
+            },
+            {
+                "offer": "cis-suse-linux-12-v2-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-suse12-l1",
+                "version": "2.0.8"
+            },
+            {
+                "offer": "cis-suse-linux-12-v2-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-suse12-l1",
+                "version": "2.0.9"
+            },
+            {
+                "offer": "cis-suse15-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-suse15-l1",
+                "version": "1.0.3"
+            },
+            {
+                "offer": "cis-suse15-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-suse15-l1",
+                "version": "1.0.4"
+            },
+            {
+                "offer": "cis-suse15-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-suse15-l1",
+                "version": "1.0.5"
+            },
+            {
+                "offer": "cis-ubuntu-linux-1604-v1-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu1604-l1",
+                "version": "1.0.26"
+            },
+            {
+                "offer": "cis-ubuntu-linux-1604-v1-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu1604-l1",
+                "version": "1.0.27"
+            },
+            {
+                "offer": "cis-ubuntu-linux-1604-v1-0-0-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu1604-l1",
+                "version": "1.0.28"
+            },
+            {
+                "offer": "cis-ubuntu-linux-1804-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu-1804-lts-l1-private-015",
+                "version": "1.0.23"
+            },
+            {
+                "offer": "cis-ubuntu-linux-1804-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu-1804-lts-l1-private-015",
+                "version": "1.0.24"
+            },
+            {
+                "offer": "cis-ubuntu-linux-1804-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu-1804-lts-l1-private-015",
+                "version": "1.0.25"
+            },
+            {
+                "offer": "cis-ubuntu-linux-1804-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu1804-l1",
+                "version": "1.0.23"
+            },
+            {
+                "offer": "cis-ubuntu-linux-1804-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu1804-l1",
+                "version": "1.0.24"
+            },
+            {
+                "offer": "cis-ubuntu-linux-1804-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu1804-l1",
+                "version": "1.0.25"
+            },
+            {
+                "offer": "cis-ubuntu-linux-2004-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu2004-l1",
+                "version": "1.0.2"
+            },
+            {
+                "offer": "cis-ubuntu-linux-2004-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu2004-l1",
+                "version": "1.0.3"
+            },
+            {
+                "offer": "cis-ubuntu-linux-2004-l1",
+                "publisher": "center-for-internet-security-inc",
+                "sku": "cis-ubuntu2004-l1",
+                "version": "1.0.4"
+            }
+        ]
+
+    },
+    "resources": [
+        {
+            "name": "VM-VirtualNetwork",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-11-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "ubuntuVM1-VirtualNetwork"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "VM1-VirtualNetwork-Subnet",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat('NIC',variables('vm')[copyIndex()].sku,variables('vm')[copyIndex()].version)]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-11-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', 'VM-VirtualNetwork')]"
+            ],
+            "tags": {
+                "displayName": "NetworkInterface"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipConfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'VM-VirtualNetwork', 'VM1-VirtualNetwork-Subnet')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "copy": {
+                "count":"[Length(variables('vm'))]",
+                "name":"NICCopy"
+            }
+        },
+        {
+            "name": "[concat(variables('vm')[copyIndex()].sku,variables('vm')[copyIndex()].version)]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "NICCopy"
+            ],
+            "tags": {
+                "displayName": "VM1CopyJob"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_B2s"
+                },
+                "osProfile": {
+                    "computerName": "[concat(variables('vm')[copyIndex()].sku,variables('vm')[copyIndex()].version)]",
+                    "adminUsername": "[parameters('adminuser')]",
+                    "adminPassword": "Test@2016"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('vm')[copyIndex()].publisher]",
+                        "offer": "[variables('vm')[copyIndex()].offer]",
+                        "sku": "[variables('vm')[copyIndex()].sku]",
+                        "version": "[variables('vm')[copyIndex()].version]"
+                    },
+                    "osDisk": {
+                        "name": "[concat('Linux-',variables('vm')[copyIndex()].sku,variables('vm')[copyIndex()].version,'-VM1-OSDisk')]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('NIC',variables('vm')[copyIndex()].sku,variables('vm')[copyIndex()].version))]"
+                        }
+                    ]
+                }
+            },
+            "copy":{
+                "name": "VMCopy",
+                "count": "[length(variables('vm'))]"
+            }
+        }
+    ],
+    "outputs": {}
+}
