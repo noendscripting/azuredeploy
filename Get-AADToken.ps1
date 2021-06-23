@@ -14,10 +14,10 @@ DISCLAIMER
 
 #Setting up requirments for script to run
 #Requires -Version 5.0
-#Requires -Modules @{ ModuleName="AzureAD"; ModuleVersion="2.0.2.16"}
+#Requires -Modules "AzureADPreview"
 
 
-$resourceAppIdURI = "https://graph.microsoft.com/.default" #This will tell Azure AD which reosurce we are trying to access
+$resourceAppIdURI = "https://graph.microsoft.com" #This will tell Azure AD which reosurce we are trying to access
 $ClientID = "ecc181a9-d06a-482a-b124-bb538549316f"   #AKA Application ID
 $TenantName = "azurenow.onmicrosoft.com"             #Your Tenant Name
 $CredPrompt = "Auto"                                   #Auto, Always, Never, RefreshSession
@@ -34,7 +34,7 @@ $JSON = @"
 #Aquiring Access tocken
 
 if (!$CredPrompt) { $CredPrompt = 'Auto' } # verifying authenticaction setting
-$AadModule = Get-Module -Name "AzureAD" -ListAvailable # getting list of all AzureAD modules
+$AadModule = Get-Module -Name "AzureADPreview" -ListAvailable # getting list of all AzureAD modules
 
 #Selectting latest verion of the ADAL library if multiple AzureAD modules found
 if ($AadModule.count -gt 1) {

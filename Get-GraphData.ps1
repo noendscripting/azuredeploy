@@ -12,102 +12,40 @@ DISCLAIMER
 #>
 
 
-#Setting up requirments for script to run
-#Requires -Version 5.0
-#Requires -Modules @{ ModuleName="AzureAD"; ModuleVersion="2.0.2.16"}
 
+$uri = "https://login.microsoftonline.com/d65b7371-c385-4060-8b4c-b6510616cb67/oauth2/v2.0/token"
+$username = 'engineer@azurenow.onmicrosoft.com'
+$password = "Greencar16"
+$clinet_id = '4fa10f26-0baf-441d-bc3c-9deb37d880e0'
+#$clinet_id = 'a9a6c770-d636-4d9e-a4bd-72fe1db8ab28'
+$client_secret = 'X~_IkB22kcpSR5PqX6kcQr7u9L-61C1n.y'
+#$scope = 'EntitlementManagement.Read.All'
+$scope = [System.Web.HTTPUtility]::UrlEncode("https://graph.microsoft.com/.default")
 
-$resourceAppIdURI = "https://graph.microsoft.com/.default" #This will tell Azure AD which reosurce we are trying to access
-$ClientID = "ecc181a9-d06a-482a-b124-bb538549316f"   #AKA Application ID
-$TenantName = "azurenow.onmicrosoft.com"             #Your Tenant Name
-$CredPrompt = "Auto"                                   #Auto, Always, Never, RefreshSession
-$redirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient"                #Your Application's Redirect URI
-$Uri = 'https://graph.microsoft.com/v1.0/users?$select=displayName,givenName' #The query you want to issue to Invoke a REST command with. 
-#You can use look up Graph Api refrence for examples of  URIs searching for single user or selecting specific properties
-$Method = "Get"                                    #GET 
-#JSON is listed as an example if you decide to use PUT or PATCH methods via Grahp. You will need to pass $JSON into body parament in Invoke-RestMethod
-$JSON = @" 
-    {
-    "userPrincipalName": "MCC-MigAdmin01@cloudlojik.onmicrosoft.com"
-    }
-"@ 
-#Aquiring Access tocken
-
-if (!$CredPrompt) { $CredPrompt = 'Auto' } # verifying authenticaction setting
-$AadModule = Get-Module -Name "AzureAD" -ListAvailable # getting list of all AzureAD modules
-
-#Selectting latest verion of the ADAL library if multiple AzureAD modules found
-if ($AadModule.count -gt 1) {
-    $Latest_Version = ($AadModule | select version | Sort-Object)[-1]
-    $aadModule = $AadModule | ? { $_.version -eq $Latest_Version.version }
-    $adal = Join-Path $AadModule.ModuleBase "Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
-    $adalforms = Join-Path $AadModule.ModuleBase "Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll"
-}
-else {
-    $adal = Join-Path $AadModule.ModuleBase "Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
-    $adalforms = Join-Path $AadModule.ModuleBase "Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll"
-}
-#Loading ADAL libriaries
-[System.Reflection.Assembly]::LoadFrom($adal) #| Out-Null
-[System.Reflection.Assembly]::LoadFrom($adalforms) #| Out-Null
-
-#Creating Authentication context and parameters
-$authority = "https://login.microsoftonline.com/$TenantName"
-$authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority
-$platformParameters = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.PlatformParameters"    -ArgumentList $CredPrompt
-
-#Sending  async authentication request and saving in a variable
-$authResult = $authContext.AcquireTokenAsync($resourceAppIdURI, $clientId, $redirectUri, $platformParameters).Result
-
-#Adding some error checking async request
-do {
-    write-host $authResult.Status
-    start-sleep -Seconds 5
-} while ($authResult.Status -eq "WaitingForActivation")
-
-
-if ($authResult.Status -eq "Faulted") {
-    $authResult.Exception | select *
-    write-host "error encountered terminating script"
-    exit
-}
-$authResult.CreateAuthorizationHeader()
-#Querying Azure AD
-
-<#Write-Progress -Id 1 -Activity "Executing query: $Uri" -CurrentOperation "Invoking MS Graph API"
-#Creating request header
-$Header = @{
-    'Content-Type'  = 'application\json'
-    'Authorization' = $authResult.CreateAuthorizationHeader()
+$tokenRequestQueryHeaderss =@{
+    ContentType = "application/x-www-form-urlencoded"
 }
 
-$QueryResults = @()
-# Do loop for receiving Get query results
-if ($Method -eq "Get") {
-    do {
-                        
-        #Send Get Rest requests untill all data retrieved
-        $Results = Invoke-RestMethod -Headers $Header -Uri $Uri -UseBasicParsing -Method $Method -ContentType "application/json"
-           
-        if ($Results.value -ne $null) { $QueryResults += $Results.value }
-        else { $QueryResults += $Results }
-        write-host "Method: $Method | URI $Uri | Found:" ($QueryResults).Count
 
-        $uri = $Results.'@odata.nextlink'
-    }until ($uri -eq $null)
+#$body = "client_id=$($clinet_id)&scope=$($scope)&username=$($username)&password=$($password)&grant_type=password"
+$body = "client_id=$($clinet_id)&scope=$($scope)&client_secret=$($client_secret)&grant_type=client_credentials"
 
-            
-            
-}
-#Example of patch method
-if ($Method -eq "Patch") {
-    #Example of patch requets
-    $Results = Invoke-RestMethod -Headers $Header -Uri $Uri -Method $Method -ContentType "application/json" -Body $Body
-    write-host "Method: $Method | URI $Uri | Executing"
+Write-Host $body
+$result = Invoke-RestMethod -Uri $uri -Body $body -Method Post -Headers $tokenRequestQueryHeaderss
+
+$queryHeaders = @{
+    Authorization = "Bearer $($result.access_token)"
+
 }
 
-#Exit progress bar and display results in the shell console
-Write-Progress -Id 1 -Activity "Executing query: $Uri" -Completed
 
-Return $QueryResults
-#>
+#$resultQuery = (Invoke-WebRequest -Headers $queryHeaders -Uri "https://graph.microsoft.com/v1.0/groups?$filter=onPremisesSyncEnabled ne true").Content
+(Invoke-RestMethod -Headers $queryHeaders -Uri "https://graph.microsoft.com/v1.0/groups?$filter=onPremisesSyncEnabled ne true").value
+#$resultQuery = (Invoke-RestMethod -Headers $queryHeaders -Uri "https://graph.microsoft.com/v1.0/groups?$filter=onPremisesSyncEnabled ne true").Content
+#$resultQuery
+
+#$hash = Get-AzureADServicePrincipal -filter "appid eq '00000003-0000-0000-c000-000000000000'" | select -ExpandProperty AppRoles | group id -AsHashTable -AsString
+
+
+
+
