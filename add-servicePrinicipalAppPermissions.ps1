@@ -1,3 +1,6 @@
+#Requires -Modules @{ ModuleName="Microsoft.Graph.Applications"; ModuleVersion="1.6.0"}
+#Requires -Modules @{ ModuleName="Microsoft.Graph.Authentication"; ModuleVersion="1.6.0"}
+
 param(
    
     [Parameter(Mandatory=$true)]
@@ -7,7 +10,7 @@ param(
     [string]$resourceAppId = '00000003-0000-0000-c000-000000000000'
 )
 
-Connect-MgGraph -Scopes Application.ReadWrite.All
+Connect-MgGraph -Scopes Directory.AccessAsUser.All
 
 $resourceAppObjId = (Get-MgServicePrincipal -Filter "appid eq '$($resourceAppId)'").Id
 $targetAppObjId = (Get-MgServicePrincipal -Filter "appid eq '$($targetAppId)'").Id
