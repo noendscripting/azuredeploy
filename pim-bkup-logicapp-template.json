@@ -1,0 +1,492 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "LogicAppName": {
+            "defaultValue": "PIM-BKUP",
+            "type": "string"
+        },
+        "storageAccountName":{
+            "type": "string"
+        },
+        "AzureADTenantid":{
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('LogicAppName')]",
+            "location": "eastus",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "storageAccountName": {
+                            "defaultValue": "[parameters('storageAccountName')]",
+                            "type": "String"
+                        },
+                        "tenantID": {
+                            "defaultValue": "[parameters('AzureADTenantid')]",
+                            "type": "String"
+                        }
+                    },
+                    "triggers": {
+                        "Recurrence": {
+                            "recurrence": {
+                                "frequency": "Month",
+                                "interval": 3
+                            },
+                            "type": "Recurrence"
+                        }
+                    },
+                    "actions": {
+                        "For_Each_Role_Assigniment": {
+                            "foreach": "@body('Parse_Roles_Assignments')?['value']",
+                            "actions": {
+                                "Filter_array": {
+                                    "runAfter": {
+                                        "Parse_Subject_Display_Name": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Query",
+                                    "inputs": {
+                                        "from": "@body('Parse_Role_Defintion')?['value']",
+                                        "where": "@equals(item()?['id'], items('For_Each_Role_Assigniment')?['roleDefinitionId'])"
+                                    }
+                                },
+                                "For_Each_Role_Definition_in_Assignments": {
+                                    "foreach": "@body('Filter_array')",
+                                    "actions": {
+                                        "Upload_Role_Assignment_": {
+                                            "runAfter": {},
+                                            "type": "Http",
+                                            "inputs": {
+                                                "authentication": {
+                                                    "audience": "https://@{parameters('storageAccountName')}.blob.core.windows.net",
+                                                    "type": "ManagedServiceIdentity"
+                                                },
+                                                "body": "@items('For_Each_Role_Assigniment')",
+                                                "headers": {
+                                                    "x-ms-blob-type": "BlockBlob",
+                                                    "x-ms-version": "2019-02-02"
+                                                },
+                                                "method": "PUT",
+                                                "uri": "@{concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/backup/roleAssignments/',formatDateTime(utcNow(),'yyyy-MM-dd'),'/',items('For_Each_Role_Definition_in_Assignments')?['displayName'],'/',substring(body('Parse_Subject_Display_Name')?['@odata.type'],Add(lastIndexOf(body('Parse_Subject_Display_Name')?['@odata.type'],'.'),1)),'/',body('Parse_Subject_Display_Name')?['displayName'],'.json')}"
+                                            }
+                                        }
+                                    },
+                                    "runAfter": {
+                                        "Filter_array": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Foreach"
+                                },
+                                "Get_Role_Assignment_Subject_Display_Name": {
+                                    "runAfter": {},
+                                    "type": "Http",
+                                    "inputs": {
+                                        "authentication": {
+                                            "audience": "https://graph.microsoft.com",
+                                            "type": "ManagedServiceIdentity"
+                                        },
+                                        "method": "GET",
+                                        "uri": "https://graph.microsoft.com/beta/directoryObjects/@{items('For_Each_Role_Assigniment')?['subjectId']}?$select=displayName"
+                                    }
+                                },
+                                "Parse_Subject_Display_Name": {
+                                    "runAfter": {
+                                        "Get_Role_Assignment_Subject_Display_Name": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@body('Get_Role_Assignment_Subject_Display_Name')",
+                                        "schema": {
+                                            "properties": {
+                                                "@@odata.context": {
+                                                    "type": "string"
+                                                },
+                                                "@@odata.type": {
+                                                    "type": "string"
+                                                },
+                                                "displayName": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Parse_Roles_Assignments": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Foreach",
+                            "runtimeConfiguration": {
+                                "concurrency": {
+                                    "repetitions": 1
+                                }
+                            }
+                        },
+                        "For_Each_Role_Setting": {
+                            "foreach": "@body('Parse_Role_Settings')?['value']",
+                            "actions": {
+                                "Filter_Role_Definition_Setting": {
+                                    "runAfter": {},
+                                    "type": "Query",
+                                    "inputs": {
+                                        "from": "@body('Parse_Role_Defintion')?['value']",
+                                        "where": "@equals(item()?['id'], items('For_Each_Role_Setting')?['roleDefinitionId'])"
+                                    }
+                                },
+                                "For_Each_Role_Definition": {
+                                    "foreach": "@body('Filter_Role_Definition_Setting')",
+                                    "actions": {
+                                        "Upload_backup_file_HTTP": {
+                                            "runAfter": {},
+                                            "type": "Http",
+                                            "inputs": {
+                                                "authentication": {
+                                                    "audience": "https://@{parameters('storageAccountName')}.blob.core.windows.net",
+                                                    "type": "ManagedServiceIdentity"
+                                                },
+                                                "body": "@items('For_Each_Role_Setting')",
+                                                "headers": {
+                                                    "x-ms-blob-type": "BlockBlob",
+                                                    "x-ms-version": "2019-02-02"
+                                                },
+                                                "method": "PUT",
+                                                "uri": "@{concat('https://',parameters('storageAccountname'),'.blob.core.windows.net/backup/roleSettings/',formatDateTime(utcNow(),'yyyy-MM-dd'),'/',items('For_Each_Role_Definition')?['displayName'],'.json')}"
+                                            },
+                                            "runtimeConfiguration": {
+                                                "contentTransfer": {
+                                                    "transferMode": "Chunked"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "runAfter": {
+                                        "Filter_Role_Definition_Setting": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Foreach"
+                                }
+                            },
+                            "runAfter": {
+                                "Parse_Role_Settings": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Foreach"
+                        },
+                        "GET_Role_Assignment": {
+                            "runAfter": {
+                                "Parse_Role_Defintion": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Http",
+                            "inputs": {
+                                "authentication": {
+                                    "audience": "https://graph.microsoft.com",
+                                    "type": "ManagedServiceIdentity"
+                                },
+                                "method": "GET",
+                                "uri": "https://graph.microsoft.com/beta/privilegedAccess/aadroles/resources/@{parameters('tenantID')}/roleAssignments"
+                            }
+                        },
+                        "GET_Role_Definition": {
+                            "runAfter": {},
+                            "type": "Http",
+                            "inputs": {
+                                "authentication": {
+                                    "audience": "https://graph.microsoft.com",
+                                    "type": "ManagedServiceIdentity"
+                                },
+                                "method": "GET",
+                                "uri": "https://graph.microsoft.com/beta/privilegedAccess/aadroles/resources/@{parameters('tenantID')}/roleDefinitions"
+                            }
+                        },
+                        "GET_Role_Settings": {
+                            "runAfter": {
+                                "Parse_Role_Defintion": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Http",
+                            "inputs": {
+                                "authentication": {
+                                    "audience": "https://graph.microsoft.com",
+                                    "type": "ManagedServiceIdentity"
+                                },
+                                "method": "GET",
+                                "uri": "https://graph.microsoft.com/beta/privilegedAccess/aadroles/resources/@{parameters('tenantID')}/roleSettings?$filter=lastUpdatedDateTime ne null"
+                            }
+                        },
+                        "Parse_Role_Defintion": {
+                            "runAfter": {
+                                "GET_Role_Definition": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ParseJson",
+                            "inputs": {
+                                "content": "@body('GET_Role_Definition')",
+                                "schema": {
+                                    "properties": {
+                                        "@@odata.context": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "items": {
+                                                "properties": {
+                                                    "displayName": {
+                                                        "type": "string"
+                                                    },
+                                                    "externalId": {
+                                                        "type": "string"
+                                                    },
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "resourceId": {
+                                                        "type": "string"
+                                                    },
+                                                    "templateId": {
+                                                        "type": "string"
+                                                    },
+                                                    "type": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "resourceId",
+                                                    "externalId",
+                                                    "templateId",
+                                                    "displayName",
+                                                    "type"
+                                                ],
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "Parse_Role_Settings": {
+                            "runAfter": {
+                                "GET_Role_Settings": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ParseJson",
+                            "inputs": {
+                                "content": "@body('GET_Role_Settings')",
+                                "schema": {
+                                    "properties": {
+                                        "@@odata.context": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "items": {
+                                                "properties": {
+                                                    "adminEligibleSettings": {
+                                                        "items": {
+                                                            "properties": {
+                                                                "ruleIdentifier": {
+                                                                    "type": "string"
+                                                                },
+                                                                "setting": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "ruleIdentifier",
+                                                                "setting"
+                                                            ],
+                                                            "type": "object"
+                                                        },
+                                                        "type": "array"
+                                                    },
+                                                    "adminMemberSettings": {
+                                                        "items": {
+                                                            "properties": {
+                                                                "ruleIdentifier": {
+                                                                    "type": "string"
+                                                                },
+                                                                "setting": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "ruleIdentifier",
+                                                                "setting"
+                                                            ],
+                                                            "type": "object"
+                                                        },
+                                                        "type": "array"
+                                                    },
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "isDefault": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "lastUpdatedBy": {},
+                                                    "lastUpdatedDateTime": {},
+                                                    "resourceId": {
+                                                        "type": "string"
+                                                    },
+                                                    "roleDefinitionId": {
+                                                        "type": "string"
+                                                    },
+                                                    "userEligibleSettings": {
+                                                        "items": {
+                                                            "properties": {
+                                                                "ruleIdentifier": {
+                                                                    "type": "string"
+                                                                },
+                                                                "setting": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "ruleIdentifier",
+                                                                "setting"
+                                                            ],
+                                                            "type": "object"
+                                                        },
+                                                        "type": "array"
+                                                    },
+                                                    "userMemberSettings": {
+                                                        "items": {
+                                                            "properties": {
+                                                                "ruleIdentifier": {
+                                                                    "type": "string"
+                                                                },
+                                                                "setting": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "ruleIdentifier",
+                                                                "setting"
+                                                            ],
+                                                            "type": "object"
+                                                        },
+                                                        "type": "array"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "resourceId",
+                                                    "roleDefinitionId",
+                                                    "isDefault",
+                                                    "lastUpdatedDateTime",
+                                                    "lastUpdatedBy",
+                                                    "adminEligibleSettings",
+                                                    "adminMemberSettings",
+                                                    "userEligibleSettings",
+                                                    "userMemberSettings"
+                                                ],
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "Parse_Roles_Assignments": {
+                            "runAfter": {
+                                "GET_Role_Assignment": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ParseJson",
+                            "inputs": {
+                                "content": "@body('GET_Role_Assignment')",
+                                "schema": {
+                                    "properties": {
+                                        "@@odata.context": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "items": {
+                                                "properties": {
+                                                    "assignmentState": {
+                                                        "type": "string"
+                                                    },
+                                                    "endDateTime": {},
+                                                    "externalId": {
+                                                        "type": "string"
+                                                    },
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "linkedEligibleRoleAssignmentId": {},
+                                                    "memberType": {
+                                                        "type": "string"
+                                                    },
+                                                    "resourceId": {
+                                                        "type": "string"
+                                                    },
+                                                    "roleDefinitionId": {
+                                                        "type": "string"
+                                                    },
+                                                    "startDateTime": {},
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "subjectId": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "resourceId",
+                                                    "roleDefinitionId",
+                                                    "subjectId",
+                                                    "linkedEligibleRoleAssignmentId",
+                                                    "externalId",
+                                                    "startDateTime",
+                                                    "endDateTime",
+                                                    "memberType",
+                                                    "assignmentState",
+                                                    "status"
+                                                ],
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {}
+            }
+        }
+    ]
+}
