@@ -1,0 +1,28 @@
+{
+  "policyType": "Custom",
+  "mode": "All",
+  "displayName": "Deny MDE Data Settings",
+  "policyRule": {
+    "if": {
+      "field":"Microsoft.Security/settings/DataExportSetting.enabled",
+      "equals":"true" 
+    },
+    "then": {
+      "effect": "deny"
+    }
+  },
+  "metadata": {
+    "category": "Security Center",
+    "createdBy": "1a959f60-6307-4101-9de7-da51b9bb9dc2",
+    "createdOn": "2021-08-18T17:36:03.0120668Z",
+    "updatedBy": null,
+    "updatedOn": null
+  },
+  "parameters": {
+   
+    
+  },
+  "id": "/subscriptions/87008fdf-ae91-4584-b623-7ecb86459002/providers/Microsoft.Authorization/policyDefinitions/e822f6db-7337-47ee-9307-4c04bdb0caa5",
+  "name": "e822f6db-7337-47ee-9307-4c04bdb0caa5",
+  "type": "Microsoft.Authorization/policyDefinitions"
+}

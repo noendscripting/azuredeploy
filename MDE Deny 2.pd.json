@@ -1,0 +1,28 @@
+{
+  
+    "if": {
+      "allOf":[
+        {
+           "field": "type",
+           "equals": "/microsoft.security/settings"
+        },
+        {
+            "field":"kind",
+            "equals":"DataExportSetting"
+        },
+        {
+            "field":"name",
+            "equals":"wdac"
+        },
+        {
+            "field":"Microsoft.Security/settings/DataExportSetting.enabled",
+            "equals":false
+        }
+      ]
+
+          
+    },
+    "then": {
+      "effect": "Deny"
+    }
+}
