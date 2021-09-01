@@ -1,0 +1,40 @@
+{
+ "properties": {
+  "displayName": "MDE Deny 2",
+  "policyType": "Custom",
+  "mode": "All",
+  "metadata": {
+   "createdBy": "ac559435-d840-469a-90e9-77519aaac0ff",
+   "createdOn": "2021-08-20T16:39:08.5310975Z",
+   "updatedBy": "ac559435-d840-469a-90e9-77519aaac0ff",
+   "updatedOn": "2021-09-01T15:15:35.9675982Z"
+  },
+  "parameters": {
+   "subscriptioinId": {
+    "type": "String",
+    "metadata": {},
+    "defaultValue": "null"
+   }
+  },
+  "policyRule": {
+   "if": {
+    "allOf": [
+     {
+      "field": "id",
+      "equals": "[concat('/subscriptions/',parameters('subscriptioinId'),'/providers/microsoft.security/settings/wdatp')]"
+     },
+     {
+      "field": "Microsoft.Security/settings/DataExportSetting.enabled",
+      "equals": true
+     }
+    ]
+   },
+   "then": {
+    "effect": "deny"
+   }
+  }
+ },
+ "id": "/subscriptions/88508fa3-2d17-43b4-a85d-09698559299f/providers/Microsoft.Authorization/policyDefinitions/MDE Deny 2",
+ "type": "Microsoft.Authorization/policyDefinitions",
+ "name": "MDE Deny 2"
+}
