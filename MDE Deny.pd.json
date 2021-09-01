@@ -4,7 +4,7 @@
     "allOf":[
       {
          "field": "type",
-         "equals": "/microsoft.security/settings"
+         "equals": "microsoft.security/settings"
       },
       {
           "field":"kind",
@@ -17,6 +17,7 @@
       {
           "field":"Microsoft.Security/settings/DataExportSetting.enabled",
           "equals":false
+
       }
     ]
 
