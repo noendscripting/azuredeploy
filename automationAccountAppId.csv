@@ -1,0 +1,3 @@
+"AutomationAccountName","ApplicationId","SubscriptionName","SubscriptionId","ResourceGroupName"
+"DemoAutomation","eaa39b3e-fcf5-4ddb-9b7f-7f81b3333358","Microsoft Azure Sponsorship 2","88508fa3-2d17-43b4-a85d-09698559299f","defaultresourcegroup-wus"
+"EastAutomationAccount","441ce80f-9dfc-443c-9bcc-978080fa28ee","ES-CE-CUS-MS-miresnic","a659182b-c925-4e27-a56d-f40be3f61562","automationaccount-rg"

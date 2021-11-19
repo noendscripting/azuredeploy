@@ -11,7 +11,7 @@
     },
     "virtualMachineSize": {
       "type": "string",
-      "defaultValue": "Basic_A2"
+      "defaultValue": "Standard_B2s"
     },
     "adminUsername": {
       "type": "string",
@@ -86,10 +86,13 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "MicrosoftVisualStudio",
-            "offer": "Windows",
+            //"publisher": "MicrosoftVisualStudio",
+            "publisher": "MicrosoftWindowsServer",
+            //"offer": "Windows",
+            "offer": "WindowsServer",
             //"sku": "Win7-SP1-Ent-N-x64",
-            "sku": "Windows-10-N-x64",
+            //"sku": "Windows-10-N-x64",
+            "sku":"2019-Datacenter",
             
             "version": "latest"
           },

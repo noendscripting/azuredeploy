@@ -21,7 +21,7 @@ $resourceAppIdURI = "https://graph.microsoft.com" #This will tell Azure AD which
 $ClientID = "ecc181a9-d06a-482a-b124-bb538549316f"   #AKA Application ID
 $TenantName = "azurenow.onmicrosoft.com"             #Your Tenant Name
 $CredPrompt = "Auto"                                   #Auto, Always, Never, RefreshSession
-$redirectUri = "https://localhost"                #Your Application's Redirect URI
+$redirectUri = 'msal://redirect'                #Your Application's Redirect URI
 $Uri = "https://graph.microsoft.com/.default" #The query you want to issue to Invoke a REST command with. 
 #You can use look up Graph Api refrence for examples of  URIs searching for single user or selecting specific properties
 $Method = "Get"                                    #GET 
