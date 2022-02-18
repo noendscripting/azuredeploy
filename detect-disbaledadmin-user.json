@@ -1,0 +1,226 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "LogicAppName": {
+            "type": "string"
+        },
+        "adminUnitId": {
+            "type": "string"
+        },
+        "upnSuffix": {
+            "type": "string"
+        },
+        "runFrequency": {
+            "type": "string",
+            "allowedValues": [
+                "Month",
+                "Week",
+                "Day",
+                "Hour",
+                "Minute",
+                "Secong"
+            ],
+            "defaultValue": "Month"
+        },
+        "runInterval": {
+            "type": "int",
+            "defaultValue": 1
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('LogicAppName')]",
+            "location": "[resourceGroup().location]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        },
+                        "adminUnitId": {
+                            "defaultValue": "[parameters('adminUnitId')]",
+                            "type": "String"
+                        },
+                        "upnSuffix": {
+                            "defaultValue": "[parameters('upnSuffix')]",
+                            "type": "String"
+                        }
+                    },
+                    "triggers": {
+                        "Recurrence": {
+                            "recurrence": {
+                                "frequency": "[parameters('runFrequency')]",
+                                "interval": "[parameters('runInterval')]"
+                            },
+                            "evaluatedRecurrence": {
+                                "frequency": "[parameters('runFrequency')]",
+                                "interval": "[parameters('runInterval')]"
+                            },
+                            "type": "Recurrence"
+                        }
+                    },
+                    "actions": {
+                        "Compose": {
+                            "runAfter": {
+                                "For_each_AU_member": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Compose",
+                            "inputs": "@variables('userArray')"
+                        },
+                        "For_each_AU_member": {
+                            "foreach": "@body('Parse_Member_List_JSON')?['value']",
+                            "actions": {
+                                "Append_to_array_variable": {
+                                    "runAfter": {
+                                        "HTTP": [
+                                            "Failed"
+                                        ]
+                                    },
+                                    "type": "AppendToArrayVariable",
+                                    "inputs": {
+                                        "name": "userArray",
+                                        "value": "@items('For_each_AU_member')?['userPrincipalName']"
+                                    }
+                                },
+                                "HTTP": {
+                                    "runAfter": {
+                                        "Set_userName_variable": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Http",
+                                    "inputs": {
+                                        "authentication": {
+                                            "audience": "https://graph.microsoft.com",
+                                            "type": "ManagedServiceIdentity"
+                                        },
+                                        "method": "GET",
+                                        "uri": "https://graph.microsoft.com/v1.0/users/@{concat(split(items('For_each_AU_member')?['userPrincipalName'],'@')[0],'@',parameters('upnSuffix'))}?$select=id"
+                                    }
+                                },
+                                "Set_userName_variable": {
+                                    "runAfter": {},
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "userName",
+                                        "value": "@{concat(split(items('For_each_AU_member')?['userPrincipalName'],'@')[0],'@',parameters('upnSuffix'))}"
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Parse_Member_List_JSON": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Foreach",
+                            "runtimeConfiguration": {
+                                "concurrency": {
+                                    "repetitions": 3
+                                }
+                            }
+                        },
+                        "HTTP_Get_Member_List_in_AU": {
+                            "runAfter": {
+                                "Initialize_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Http",
+                            "inputs": {
+                                "authentication": {
+                                    "audience": "https://graph.microsoft.com",
+                                    "type": "ManagedServiceIdentity"
+                                },
+                                "method": "GET",
+                                "uri": "https://graph.microsoft.com/v1.0/directory/administrativeUnits/@{parameters('adminUnitId')}/members?$select=userPrincipalName"
+                            }
+                        },
+                        "Initialize_userName_variable": {
+                            "runAfter": {},
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "userName",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable": {
+                            "runAfter": {
+                                "Initialize_userName_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "userArray",
+                                        "type": "array"
+                                    }
+                                ]
+                            }
+                        },
+                        "Parse_Member_List_JSON": {
+                            "runAfter": {
+                                "HTTP_Get_Member_List_in_AU": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ParseJson",
+                            "inputs": {
+                                "content": "@body('HTTP_Get_Member_List_in_AU')",
+                                "schema": {
+                                    "properties": {
+                                        "@@odata.context": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "items": {
+                                                "properties": {
+                                                    "@@odata.type": {
+                                                        "type": "string"
+                                                    },
+                                                    "userPrincipalName": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "@@odata.type",
+                                                    "userPrincipalName"
+                                                ],
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,26 @@
+{
+  "mode": "Indexed",
+  "policyRule": {
+    "if": {
+      "allOf": [
+        {
+          "field": "Microsoft.Network/applicationGateways/httpListeners[*].frontendIpConfiguration.id",
+					"notlike": "[concat('*/', parameters('frontEndIpName'))]"
+          
+        }
+      ]
+    },
+    "then": {
+      "effect": "Deny"
+    }
+  },
+  "parameters": {
+    "frontEndIpName": {
+      "type": "String",
+      "metadata": {
+        "displayName": "frontEndIpName",
+        "description": "Name of the allowed Front End Ip configurtaion"
+      }
+  }
+	}
+}
