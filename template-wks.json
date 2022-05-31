@@ -86,14 +86,13 @@
         },
         "storageProfile": {
           "imageReference": {
-            //"publisher": "MicrosoftVisualStudio",
-            "publisher": "MicrosoftWindowsServer",
-            //"offer": "Windows",
-            "offer": "WindowsServer",
+            "publisher": "MicrosoftVisualStudio",
+            //"publisher": "MicrosoftWindowsServer",
+            "offer": "Windows",
+            //"offer": "WindowsServer",
             //"sku": "Win7-SP1-Ent-N-x64",
-            //"sku": "Windows-10-N-x64",
-            "sku":"2019-Datacenter",
-            
+            "sku": "Windows-10-N-x64",
+            //"sku":"2019-Datacenter",
             "version": "latest"
           },
           "osDisk": {

@@ -31,7 +31,7 @@
       }
     
       $report += $item
-      iperf3.exe -c $destination.value -f m -w 85KB -t 15 -J --logfile $somelogfilelater
+      #iperf3.exe -c $destination.value -f m -w 85KB -t 15 -J --logfile $somelogfilelater
       Clear-Variable item
       Clear-Variable pingResult
       start-sleep -Seconds 10

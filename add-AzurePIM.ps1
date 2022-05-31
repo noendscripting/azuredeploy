@@ -18,16 +18,31 @@ param(
     [Parameter(Mandatory)]
     [string]$groupName,
     [Parameter(Mandatory,ValueFromPipelineByPropertyName)]
-    [string]$Id
+    [string]$Id,
+    [Parameter(Mandatory)]
+    [string]$role,
+    [string]$apiVersion = '2020-10-01'
 )
 
 #region Classes
+class EligibilityAssignment
+{
+  [EligibilityAssignmentPropeties]$properties=[EligibilityAssignmentPropeties]::New()
+}
+class EligibilityAssignmentPropeties
+    {
+        [string]$roleDefinitionId
+        [string]$principalId
+        [string]$requestType = 'AdminAssign'
+        [ScheduleInfo]$ScheduleInfo = [ScheduleInfo]::New()
+        
+    }
 class ScheduleInfo {
     [string]$StartDateTime # format "2020-09-09T21:31:27.91Z"
     [Expiration]$Expiration = [Expiration]::New()
   }
   class Expiration {
-    [string]$Type  # Values: AfterDuration, AfterDateTime, NoExpiration
+    [string]$Type = 'NoExpiration'  # Values: AfterDuration, AfterDateTime, NoExpiration
     [string]$EndDateTime
     [string]$Duration  #"P365D"  Use ISO 8601 format
   }
@@ -35,15 +50,18 @@ class ScheduleInfo {
 
 
 Write-Debug $Id
-exit
 $filter = '$filter'
 $select = '$select'
 
-$groupData = (Invoke-AzRestMethod -Uri "https://graph.microsoft.com/v1.0/groups?$($filter)=startswith(displayName, '"$($groupName)"'&$($select)=id").Content | ConvertFrom-Json -Depth 99
+
+write-host "https://graph.microsoft.com/v1.0/groups?$($filter)=startswith(displayName,'$groupName')&$($select)=id"
+
+
+$groupData = (Invoke-AzRestMethod -Uri "https://graph.microsoft.com/v1.0/groups?$($filter)=startswith(displayName,'$groupName')&$($select)=id").Content | ConvertFrom-Json -Depth 99
 $groupObjectId = $groupData.value.id
-
 $roleEligibilityScheduleRequestName = (new-guid).Guid
-
+$roleDefenitionId = (Get-AzRoleDefinition -Name $role -Scope $Id).Id
+$subscriptionId = $Id.Split("/")[2]
 
 
 $eligibilityScheduleObject = [EligibilityAssignment]::New()
@@ -51,7 +69,6 @@ $eligibilityScheduleObject = [EligibilityAssignment]::New()
 
 $eligibilityScheduleObject.properties.PrincipalId = $groupObjectId
 $eligibilityScheduleObject.properties.RoleDefinitionId="/subscriptions/$($subscriptionId)/providers/Microsoft.Authorization/roleDefinitions/$($roleDefenitionId)"
-$eligibilityScheduleObject.properties.ScheduleInfo.StartDateTime = Get-Date -UFormat %Y-%m-%eT%T.%SZ
-$eligibilityScheduleObject.properties.ScheduleInfo.Expiration.Type='NoExpiration'
+$assignmentPayload = $eligibilityScheduleObject | ConvertTo-Json -Depth 99
 
-Invoke-AzRest -Path "$($resourceId)/providers/Microsoft.Authorization/roleEligibilityScheduleRequests/$($roleEligibilityScheduleRequestName)?api-version=2020-10-01-preview" -Method PUT -Payload $assignmentPayload
+Invoke-AzRest -Path "$($Id)/providers/Microsoft.Authorization/roleEligibilityScheduleRequests/$($roleEligibilityScheduleRequestName)?api-version=$($apiVersion)" -Method PUT -Payload $assignmentPayload
