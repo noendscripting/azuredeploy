@@ -28,14 +28,12 @@ param(
     $filepath = "./costesteemate.csv"
 )
 
-
 Function Get-QueryData {
     Param(
         $queryPrefix,
         $workspaceId,
         $costVariable,
         $DateRange
-
     )
 
     $queryFilters = "| where TimeGenerated > ago($($DateRange))  and ResourceProvider in ('Microsoft.Compute', 'Microsoft.HybridCompute') and Computer !contains ""."" "  
@@ -45,7 +43,9 @@ Function Get-QueryData {
     $queryOutputViewFilter = "| where total_running_hours > 0 and isnotempty (SubscriptionId)"
 
     $queryString = "$($queryPrefix.TrimEnd(","," "))$($queryFilters)$($queryOutPutPreFilter)$($queryDynamicValue1)$($queryOutputFinalView)$($queryOutputViewFilter)"
+    Write-Verbose $workspaceId
     Write-Verbose $queryString
+
     (Invoke-AzOperationalInsightsQuery -WorkspaceId $workspaceId -Query $queryString).Results | ForEach-Object {
 
         $outPutObject = New-Object psobject -Property @{
@@ -56,12 +56,7 @@ Function Get-QueryData {
         }
         return $outPutObject
     }
-
-    
-
 }
-
-
 
 # verify current session is loged on to Azure and prompt for login if not
 $context = Get-AzContext
@@ -91,16 +86,29 @@ $tableName = "Heartbeat"
 $list = @{}
 #discover all availble workspaces
 
-$workspaceQuery = 'resources|where type== "microsoft.operationalinsights/workspaces" |  extend workspaceId = properties.customerId |  summarize workspaceID=make_set(workspaceId) by location'
+$workspaceQuery = 'resources|where type== "microsoft.operationalinsights/workspaces" |  extend workspaceId = properties.customerId | where properties.publicNetworkAccessForQuery != "Disabled" | summarize workspaceID=make_set(workspaceId) by location'
 
+# Fetch the full array of subscription IDs
+$subscriptions = Get-AzSubscription
+$subscriptionIds = $subscriptions.Id
 
+# Create a counter, set the batch size, and prepare a variable for the results
+$counter = [PSCustomObject] @{ Value = 0 }
+$batchSize = 1000
 
-(Search-AzGraph -Query $workspaceQuery).Data | ForEach-Object {
-    $list.Add($_.location, $_.workspaceId)
+# Group the subscriptions into batches
+$subscriptionsBatch = $subscriptionIds | Group-Object -Property { [math]::Floor($counter.Value++ / $batchSize) }
+
+# Run the query for each batch
+foreach ($batch in $subscriptionsBatch){ 
+    (Search-AzGraph -Query $workspaceQuery).Data | ForEach-Object {
+        if ($list.item($_.location)){
+            $list.Item($_.location) += $_.workspaceId
+        }else{
+            $list.Add($_.location, $_.workspaceId)
+        }
+    }
 }
-
-
-
 
 # Iterate through Log Analytics Entries to put together union query string
 ForEach ($region in $list.keys) {
@@ -118,9 +126,7 @@ ForEach ($region in $list.keys) {
         
         }
     }
-    
-
 }
 
-Write-Host "Writing out putto $($filepath) file" -ForegroundColor DarkGreen
+Write-Host "Writing out put to $($filepath) file" -ForegroundColor DarkGreen
 $output | Export-Csv $filepath -Force
