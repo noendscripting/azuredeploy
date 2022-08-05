@@ -122,5 +122,5 @@ ForEach ($region in $list.keys) {
 
 }
 
-
+Write-Host "Writing out putto $($filepath) file" -ForegroundColor DarkGreen
 $output | Export-Csv $filepath -Force
