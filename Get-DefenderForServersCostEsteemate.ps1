@@ -24,7 +24,8 @@ param(
     [Parameter(Mandatory=$true)]
     [ValidateSet("Week","Month")]
     [string]
-    $TimeRange
+    $TimeRange,
+    $filepath = "./costesteemate.csv"
 )
 
 
@@ -122,4 +123,4 @@ ForEach ($region in $list.keys) {
 }
 
 
-$output | Export-Csv C:\Temp\costesteemate.csv -Force
+$output | Export-Csv $filepath -Force
