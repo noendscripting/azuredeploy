@@ -101,7 +101,7 @@ $subscriptionsBatch = $subscriptionIds | Group-Object -Property { [math]::Floor(
 
 # Run the query for each batch
 foreach ($batch in $subscriptionsBatch){ 
-    (Search-AzGraph -Query $workspaceQuery).Data | ForEach-Object {
+    (Search-AzGraph -Subscription $batch.Group -Query $workspaceQuery).Data  | ForEach-Object {
         if ($list.item($_.location)){
             $list.Item($_.location) += $_.workspaceId
         }else{
