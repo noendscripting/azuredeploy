@@ -17,18 +17,68 @@ DISCLAIMER
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
-    [ValidateSet("P1","P2")]
+    [Parameter(Mandatory = $true)]
+    [ValidateSet("P1", "P2")]
     [string]
     $sku,
-    [Parameter(Mandatory=$true)]
-    [ValidateSet("Week","Month")]
+    [Parameter(Mandatory = $true)]
+    [ValidateSet("Week", "Month")]
     [string]
     $TimeRange,
     $filepath = "./costesteemate.csv"
 )
 
-Function Get-QueryData {
+
+Function Get-SubscriptionQueryData {
+    param(
+        $subscripotions
+    )
+
+    $list = @{}
+    $workspaceQuery = 'resources|where type== "microsoft.operationalinsights/workspaces" |  extend workspaceId = properties.customerId | where properties.publicNetworkAccessForQuery != "Disabled" | summarize workspaceID=make_set(workspaceId) by location'
+    do {
+        $payload = @'
+{
+    'subscriptions': [
+    ],
+    'query':"",
+    'options':{
+        '$skiptoken': ""
+    }
+}
+'@
+
+
+    $payloadObject = $payload | ConvertFrom-Json
+    $payloadObject.subscriptions = $subscripotions
+    $payloadObject.query = $workspaceQuery
+    
+    $body = ($payloadObject | ConvertTo-Json)
+        $queryResponses = $null
+        $queryResponses = (Invoke-AzRestMethod -Uri 'https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01' -Method POST -Payload $body).Content | ConvertFrom-Json
+        forEach ($queryResponse in $queryResponses.data) {
+            if ($list.item($queryResponse.location)) {
+
+                $list.Item($queryResponse.location) += $queryResponse.workspaceId
+            }
+            else {
+                $list.Add($queryResponse.location, $queryResponse.workspaceId)
+            }
+        }
+        $payloadObject.options.'$skiptoken' = $queryResponses.$skiptoken | Out-Null
+        Start-Sleep -Seconds 3
+
+    } until (
+
+        [string]::IsNullOrEmpty($payloadObject.options.'$skiptoken')
+    )
+    
+    return $list
+}
+Function Get-VMQueryData {
+
+
+
     Param(
         $queryPrefix,
         $workspaceId,
@@ -52,7 +102,7 @@ Function Get-QueryData {
             'Computer'          = $PSItem.Computer.ToString()
             'SubscriptionId'    = $PSItem.SubscriptionId
             'TotalRunningHours' = $PSItem.total_running_hours
-            'CostEsteemate($)'     = "$"+ "$([int]$PSItem.total_running_hours * $costVariable)"
+            'CostEsteemate($)'  = "$" + "$([int]$PSItem.total_running_hours * $costVariable)"
         }
         return $outPutObject
     }
@@ -65,20 +115,18 @@ if (!$context) {
     Write-Host "No connected to Azure. Please follow steps below to login" -ForegroundColor DarkYellow
     Connect-AzAccount 
 } 
-$list = @()
+$listWorkspaces = @()
 $output = @()
 
-Switch ($sku)
-{
-    "P1" {[decimal]$adjustment = '0.01' }
-    "P2" {[decimal]$adjustment = '0.02' }
+Switch ($sku) {
+    "P1" { [decimal]$adjustment = '0.01' }
+    "P2" { [decimal]$adjustment = '0.02' }
      
 }
 
-Switch($TimeRange)
-{
-    "Week" {$daysAgo = "7d"}
-    "Month"{$daysAgo = "30d"}
+Switch ($TimeRange) {
+    "Week" { $daysAgo = "7d" }
+    "Month" { $daysAgo = "30d" }
 }
 
 $queryPrefix = "union "
@@ -86,7 +134,7 @@ $tableName = "Heartbeat"
 $list = @{}
 #discover all availble workspaces
 
-$workspaceQuery = 'resources|where type== "microsoft.operationalinsights/workspaces" |  extend workspaceId = properties.customerId | where properties.publicNetworkAccessForQuery != "Disabled" | summarize workspaceID=make_set(workspaceId) by location'
+
 
 # Fetch the full array of subscription IDs
 $subscriptions = Get-AzSubscription
@@ -100,32 +148,29 @@ $batchSize = 1000
 $subscriptionsBatch = $subscriptionIds | Group-Object -Property { [math]::Floor($counter.Value++ / $batchSize) }
 
 # Run the query for each batch
-foreach ($batch in $subscriptionsBatch){ 
-    (Search-AzGraph -Subscription $batch.Group -Query $workspaceQuery).Data  | ForEach-Object {
-        if ($list.item($_.location)){
-            $list.Item($_.location) += $_.workspaceId
-        }else{
-            $list.Add($_.location, $_.workspaceId)
-        }
-    }
-}
+foreach ($batch in $subscriptionsBatch) { 
 
+    
+
+    
+$listWorkspaces = Get-SubscriptionQueryData -subscripotions $batch.Group
 # Iterate through Log Analytics Entries to put together union query string
-ForEach ($region in $list.keys) {
-    $workspaces = $list[$region]
+ForEach ($region in $listWorkspaces.keys) {
+    $workspaces = $listWorkspaces[$region]
 
     Write-Host "Processing $($workspaces.Count) workspaces from $($region) region" -ForegroundColor DarkGreen
     for ($i = 0; $i -le $workspaces.Length - 1; $i++) {
         $queryPrefix += "workspace(""$($workspaces[$i])"").$($tableName),"
         #if number of entries is 100 print out current query string and start a new query string
-        if ($i % 100 -eq 0 -or $i -eq $workspaces.Length -1) {
-            Get-QueryData -queryPrefix $queryPrefix -workspaceId $workspaces[0] -costVariable $adjustment -DateRange $daysAgo | ForEach-Object {
+        if ($i % 100 -eq 0 -or $i -eq $workspaces.Length - 1) {
+            Get-VMQueryData -queryPrefix $queryPrefix -workspaceId $workspaces[0] -costVariable $adjustment -DateRange $daysAgo | ForEach-Object {
                 $output += $PSItem
             }
             $queryPrefix = "union "
         
         }
     }
+}
 }
 
 Write-Host "Writing out put to $($filepath) file" -ForegroundColor DarkGreen

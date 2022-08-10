@@ -1,0 +1,5 @@
+"SubscriptionId","Computer","TotalRunningHours","CostEsteemate($)"
+"a659182b-c925-4e27-a56d-f40be3f61562","ADLDS1","10","$0.10"
+"a659182b-c925-4e27-a56d-f40be3f61562","ServerLB2","169","$1.69"
+"a659182b-c925-4e27-a56d-f40be3f61562","ServerLB1","169","$1.69"
+"88508fa3-2d17-43b4-a85d-09698559299f","aks-agentpool-17252578-vmss000003","169","$1.69"
