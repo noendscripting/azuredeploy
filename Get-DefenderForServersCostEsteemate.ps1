@@ -56,6 +56,7 @@ Function Get-SubscriptionQueryData {
     $body = ($payloadObject | ConvertTo-Json)
         $queryResponses = $null
         $queryResponses = (Invoke-AzRestMethod -Uri 'https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01' -Method POST -Payload $body).Content | ConvertFrom-Json
+        Write-Host "Adding $($queryResponses.count) worskspaces to the list out of total $($queryResponses.totalRecords)" -ForegroundColor DarkGreen
         forEach ($queryResponse in $queryResponses.data) {
             if ($list.item($queryResponse.location)) {
 
