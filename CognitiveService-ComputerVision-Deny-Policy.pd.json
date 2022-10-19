@@ -6,17 +6,14 @@
       "if": {  
       "allOf": [
       {
-        "field":"Microsoft.CognitiveServices/accounts",
-        "equals":"true" 
+        "field": "type",
+        "equals":"Microsoft.CognitiveServices/accounts" 
       },
       {
         "field": "kind",
         "equals": "ComputerVision"
         
       }
-
-      
-
     ]
 }
 },
