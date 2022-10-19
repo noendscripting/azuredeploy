@@ -1,0 +1,27 @@
+{
+    "policyType": "Custom",
+    "mode": "All",
+    "displayName": "Deny MDE Data Settings",
+    "policyRule": {
+      "if": {  
+      "allOf": [
+      {
+        "field":"Microsoft.CognitiveServices/accounts",
+        "equals":"true" 
+      },
+      {
+        "field": "kind",
+        "equals": "ComputerVision"
+        
+      }
+
+      
+
+    ]
+}
+},
+
+      "then": {
+        "effect": "deny"
+      }
+    }
