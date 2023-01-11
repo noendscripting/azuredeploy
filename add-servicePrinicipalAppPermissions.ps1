@@ -22,3 +22,5 @@ foreach($permission in $permissions)
     New-MgServicePrincipalAppRoleAssignment -ServicePrincipalId $targetAppObjId -AppRoleId $permissioinId -PrincipalId $targetAppObjId -ResourceId $resourceAppObjId
     Clear-Variable permissioinId
 }
+
+Invoke-MgGraphRequest -Uri -Method get -OutputType PSObject

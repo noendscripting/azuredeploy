@@ -13,6 +13,130 @@ param(
 
 )
 
+<#
+    5 RULES
+    unifiedRoleManagementPolicyApprovalRule
+     {   "id": "Approval_EndUser_Assignment",
+        "ruleType": "RoleManagementPolicyApprovalRule",
+        "target": {
+          "caller": "EndUser",
+          "operations": [
+            "All"
+          ],
+          "level": "Assignment",
+          "targetObjects": null,
+          "inheritableSettings": null,
+          "enforcedSettings": null
+        }
+        "setting": {
+                "isApprovalRequired": false,
+                "isApprovalRequiredForExtension": false,
+                "isRequestorJustificationRequired": true,
+                "approvalMode": "SingleStage",
+                "approvalStages": [
+                    {
+                        "approvalStageTimeOutInDays": 1,
+                        "isApproverJustificationRequired": true,
+                        "escalationTimeInMinutes": 0,
+                        "isEscalationEnabled": false,
+                        "primaryApprovers": [],
+                        "escalationApprovers": []
+                    }
+                ]
+            }
+      }
+
+    unifiedRoleManagementPolicyAuthenticationContextRule                {
+           
+    unifiedRoleManagementPolicyEnablementRule
+    Eligibility
+    {
+        "enabledRules": [],
+        "id": "Enablement_Admin_Eligibility",
+        "ruleType": "RoleManagementPolicyEnablementRule",
+        "target": {
+          "caller": "Admin",
+          "operations": [
+            "All"
+          ],
+          "level": "Eligibility",
+          "targetObjects": null,
+          "inheritableSettings": null,
+          "enforcedSettings": null
+        }
+    }
+    Assigniment
+    { 
+     "enabledRules": [
+              "MultiFactorAuthentication",
+              "Justification",
+              "Ticketing"
+            ],
+            "id": "Enablement_EndUser_Assignment",
+            "ruleType": "RoleManagementPolicyEnablementRule",
+            "target": {
+              "caller": "EndUser",
+              "operations": [
+                "All"
+              ],
+              "level": "Assignment",
+              "targetObjects": null,
+              "inheritableSettings": null,
+              "enforcedSettings": null
+            }
+     }
+          
+
+          
+    unifiedRoleManagementPolicyExpirationRule
+    Eligibility
+       {
+        "isExpirationRequired": true,
+        "maximumDuration": "P90D",
+        "id": "Expiration_Admin_Eligibility",
+        "ruleType": "RoleManagementPolicyExpirationRule",
+        "target": {
+          "caller": "Admin",
+          "operations": [
+            "All"
+          ],
+          "level": "Eligibility",
+          "targetObjects": null,
+          "inheritableSettings": null,
+          "enforcedSettings": null
+        }
+      }
+    Assigniment
+    {
+        "isExpirationRequired": false,
+        "maximumDuration": "P90D",
+        "id": "Expiration_Admin_Assignment",
+        "ruleType": "RoleManagementPolicyExpirationRule",
+        "target": {
+          "caller": "Admin",
+          "operations": [
+            "All"
+          ],
+          "level": "Assignment",
+          "targetObjects": null,
+          "inheritableSettings": null,
+          "enforcedSettings": null
+        }
+      } 
+    unifiedRoleManagementPolicyNotificationRule
+
+
+
+Properties
+Caller
+Operations
+level
+inhetitableSettings
+enforcedSettings
+
+#>
+
+
 #region Classes
 
 #root class for PIM polciies 

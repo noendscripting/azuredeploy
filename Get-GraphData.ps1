@@ -12,26 +12,31 @@ DISCLAIMER
 #>
 
 
+# Below are samples for multiple options to retrieve Graph Data. This is not intended to run as a script
+
+#region Manual Applkication Non Interactive flow no ADAL\MSAL
 
 $uri = "https://login.microsoftonline.com/d65b7371-c385-4060-8b4c-b6510616cb67/oauth2/v2.0/token"
-$username = 'engineer@azurenow.onmicrosoft.com'
-$password = "Greencar16"
-$clinet_id = '4fa10f26-0baf-441d-bc3c-9deb37d880e0'
-#$clinet_id = 'a9a6c770-d636-4d9e-a4bd-72fe1db8ab28'
-$client_secret = 'X~_IkB22kcpSR5PqX6kcQr7u9L-61C1n.y'
-#$scope = 'EntitlementManagement.Read.All'
+$clinet_id = #<clkient id of the service principal>
+$client_secret = #<value of the secret kiey of the servcie principal'
 $scope = [System.Web.HTTPUtility]::UrlEncode("https://graph.microsoft.com/.default")
 
-$tokenRequestQueryHeaderss =@{
+
+#Creating header for Access Token request
+$tokenRequestQueryHeaders =@{
     ContentType = "application/x-www-form-urlencoded"
 }
 
 
-#$body = "client_id=$($clinet_id)&scope=$($scope)&username=$($username)&password=$($password)&grant_type=password"
+#creating request body for Access Token request
 $body = "client_id=$($clinet_id)&scope=$($scope)&client_secret=$($client_secret)&grant_type=client_credentials"
 
-Write-Host $body
-$result = Invoke-RestMethod -Uri $uri -Body $body -Method Post -Headers $tokenRequestQueryHeaderss
+Write-Verbose $body
+
+#Call auth enpoint to get Access Token
+$result = Invoke-RestMethod -Uri $uri -Body $body -Method Post -Headers $
+
+#Create Authorization Header using Access Token received in the step one
 
 $queryHeaders = @{
     Authorization = "Bearer $($result.access_token)"
@@ -39,12 +44,11 @@ $queryHeaders = @{
 }
 
 
-#$resultQuery = (Invoke-WebRequest -Headers $queryHeaders -Uri "https://graph.microsoft.com/v1.0/groups?$filter=onPremisesSyncEnabled ne true").Content
-(Invoke-RestMethod -Headers $queryHeaders -Uri "https://graph.microsoft.com/v1.0/groups?$filter=onPremisesSyncEnabled ne true").value
-#$resultQuery = (Invoke-RestMethod -Headers $queryHeaders -Uri "https://graph.microsoft.com/v1.0/groups?$filter=onPremisesSyncEnabled ne true").Content
-#$resultQuery
+$resultQuery = (Invoke-WebRequest -Headers $queryHeaders -Uri "https://graph.microsoft.com/v1.0/groups?$filter=onPremisesSyncEnabled ne true").Content
+$resultQuery
 
-#$hash = Get-AzureADServicePrincipal -filter "appid eq '00000003-0000-0000-c000-000000000000'" | select -ExpandProperty AppRoles | group id -AsHashTable -AsString
+
+
 
 
 
