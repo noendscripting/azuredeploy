@@ -215,8 +215,11 @@
           },
           "osDisk": {
             "createOption": "FromImage",
-            "caching": "ReadWrite",
-            "diskSizeGB": 512
+            "caching": "None",
+            "diskSizeGB": 127,
+            "managedDisk": {
+                "storageAccountType": "StandardSSD_LRS"
+        }
           }
         },
         "networkProfile": {

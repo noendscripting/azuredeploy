@@ -16,8 +16,8 @@ DISCLAIMER
  [CmdletBinding()]
   param (
   [Parameter(Mandatory)]
-  [string[]]$role,
-  [string]$resourceId,
+  [string]$role,
+  [string]$resourceId = '/subscriptions/87008fdf-ae91-4584-b623-7ecb86459002/resourceGroups/AADBkup-RG/providers/Microsoft.Storage/storageAccounts/aadbkup',
   [string]$apiVersion='2020-10-01'
   )
   
@@ -76,8 +76,7 @@ Class Expiration_EndUser_Assignment
 
 
 #endregion
-$subscriptionId = $resourceId.Split("/")[2]
-$roleDefenitionId = (Get-AzRoleDefinition -Name $role -Scope $Id).Id
+$roleDefenitionId = (Get-AzRoleDefinition -Name $role -Scope $resourceId).Id
 $filter = '$filter'
 #region collect current policy settings
 $policyResult = (Invoke-AzRest -Path "$($resourceId)/providers/Microsoft.Authorization/roleManagementPolicies?api-version=$($apiVersion)&$filter=roleDefinitionId%20eq%20'$($resourceId)/providers/Microsoft.Authorization/roleDefinitions/$($roleDefenitionId)'" -Method GET).Content | ConvertFrom-Json
@@ -96,7 +95,7 @@ $Enablement_EndUser_Assignment.target.level = 'Assignment'
 #endregion
 #region Setting Activation Rules
 $Expiration_EndUser_Assignment = [Expiration_EndUser_Assignment]::New()
-$Expiration_EndUser_Assignment.maximumDuration = "PT6H"
+$Expiration_EndUser_Assignment.maximumDuration = "PT10D"
 $Expiration_EndUser_Assignment.isExpirationRequired = $true
 $Expiration_EndUser_Assignment.target.level = 'Assignment'
 #endregion
@@ -104,17 +103,17 @@ $Expiration_EndUser_Assignment.target.level = 'Assignment'
 #region Creating rules array
 $policySettings = @()
 
-$policySettings += $Expiration_Admin_Eligibility
-$policySettings += $Enablement_EndUser_Assignment
+#$policySettings += $Expiration_Admin_Eligibility
+#$policySettings += $Enablement_EndUser_Assignment
 $policySettings += $Expiration_EndUser_Assignment
 
 $policyObject.properties.rules = $policySettings
-
-#$policyObject.properties.rules
 #endregion
 
 #region update policy 
 $policyUpdate = $policyObject | ConvertTo-Json -Depth 99
+Write-Verbose $policyUpdate
+
 Invoke-AzRest -Path "$($resourceId)/providers/Microsoft.Authorization/roleManagementPolicies/$($policyName)?api-version=$($apiVersion)" -Method PATCH -Payload $policyUpdate
 #endregion
 

@@ -1,7 +1,7 @@
 [CmdletBinding()]
 
 param(
-    [string]$RoleActivationMaximumDuration,
+   <# [string]$RoleActivationMaximumDuration,
     [bool]$RequireJustificationOnRoleActivation,
     [bool]$RequireTicketInformationOnRoleActivation,
     [bool]$RequireApprovalToActivateRole,
@@ -10,9 +10,12 @@ param(
     [string]$role,
     [Parameter(Mandatory,ValueFromPipelineByPropertyName)]
     [string]$Id
+    #>
 
 )
 
+
+# regex for dateInterval format  '(P([1-9]|[1-9][0-9])(W|D|M|H)|PT([1-9]|[1-9][0-9])H)'
 <#
     5 RULES
     unifiedRoleManagementPolicyApprovalRule
@@ -88,7 +91,7 @@ param(
           
 
           
-    unifiedRoleManagementPolicyExpirationRule
+  unifiedRoleManagementPolicyExpirationRule
     Eligibility
        {
         "isExpirationRequired": true,
@@ -194,18 +197,29 @@ enforcedSettings
 
 #region Classes
 
-#root class for PIM polciies 
-class PolicySettings
-{
-        [PolicyProperties]$properties=[PolicyProperties]::New()
-}
 #class for policy settings array 
 class PolicyProperties
 {
         [array]$rules 
 }
 
+#root class for PIM polciies 
+class PolicySettings
+{
+        [PolicyProperties]$properties=[PolicyProperties]::New()
+}
+
 #class to define target object
+<#class Target
+{
+    [string]$caller = "EndUser" # posisble values EndUser, Admin
+    [string[]]$operations = @("All")
+    [string]$level # Possible values Elibility, Assignmnet 
+   # [object]$targetObjects = $null
+   # [object]$enforcedSettings= $null
+   # [object]$inheritableSettings=$null
+}#>
+
 class Target
 {
     [string]$caller = "EndUser"
@@ -216,51 +230,95 @@ class Target
     [object]$inheritableSettings=$null
 }
 
-Class Expiration
+<#Class Expiration
     {
-        [bool] $isExpirationRequired
-        [string] $maximumDuration
-        [string] $id
-        [string] $ruleType
+        [bool]$isExpirationRequired
+        [string]$maximumDuration
+        [string]$id
+        [string]$ruleType
+        [Target]$target = [Target]::New()
+    }#>
+
+    Class Expiration
+    {
+        [bool]$isExpirationRequired
+        [string]$maximumDuration
+        [string]$id ="Expiration_EndUser_Assignment"
+        [string]$ruleType = "RoleManagementPolicyExpirationRule"
         [Target]$target = [Target]::New()
     }
+
+    Class Expiration_EndUser_Assignment
+{
+    [bool]$isExpirationRequired
+    [string]$maximumDuration
+    [string]$id ="Expiration_EndUser_Assignment"
+    [string]$ruleType = "RoleManagementPolicyExpirationRule"
+    [Target]$target = [Target]::New()
+}
+Class Enablement 
+{
+  
+    [string[]]$enabledRules = @() # possible values "MultiFactorAuthentication", "Justification","Ticketing"
+    [string]$id 
+    [string]$ruleType
+    [Target]$target = [Target]::New()
+
+}
 #end region
 
 
 
 
-#$resourceId = "/subscriptions/87008fdf-ae91-4584-b623-7ecb86459002/resourceGroups/Group-test/providers/Microsoft.Storage/storageAccounts/101csvprocesstest"
-$subscriptionId = $Id.Split("/")[2]
+$id = "/subscriptions/87008fdf-ae91-4584-b623-7ecb86459002/resourceGroups/AADBkup-RG/providers/Microsoft.Storage/storageAccounts/aadbkup"
+$role = "Contributor"
+$apiVersion='2020-10-01'
 $roleDefenitionId = (Get-AzRoleDefinition -Name $role -Scope $Id).Id
 Write-Verbose $roleDefenitionId
 $filter = '$filter'
 #region collect current policy settings
-$policyResult = (Invoke-AzRest -Path "$($Id)/providers/Microsoft.Authorization/roleManagementPolicies?api-version=2020-10-01-preview&$filter=roleDefinitionId%20eq%20'$($Id)/providers/Microsoft.Authorization/roleDefinitions/$($roleDefenitionId)'" -Method GET).Content | ConvertFrom-Json
-$policyName = $policyResult.value.name
-$policyName
+$policyResult = (Invoke-AzRest -Path "$($Id)/providers/Microsoft.Authorization/roleManagementPolicies?api-version=2020-10-01-preview&$($filter)=roleDefinitionId%20eq%20'$($Id)/providers/Microsoft.Authorization/roleDefinitions/$($roleDefenitionId)'" -Method GET).Content # | ConvertFrom-Json
+#backup current policy 
 
-#create root policy object
+
 $policyObject = [PolicySettings]::New()
-#endregion
+#region Setting Role Assignment Rules
+<#$Expiration_Admin_Eligibility = [Expiration_Admin_Eligibility]::New()
+$Expiration_Admin_Eligibility.isExpirationRequired = $false
+$Expiration_Admin_Eligibility.target.level = 'Eligibility'
 
+$Enablement_EndUser_Assignment = [Enablement_EndUser_Assignment]::New()
+$Enablement_EndUser_Assignment.enabledRules = @("Justification","MultiFactorAuthentication")
+$Enablement_EndUser_Assignment.target.level = 'Assignment'#>
+#endregion
 #region Setting Activation Rules
-$Expiration_EndUser_Assignment = [Expiration]::New()
-$Expiration_EndUser_Assignment.id = 'Expiration_EndUser_Assignment'
-$Expiration_EndUser_Assignment.ruleType = 'RoleManagementPolicyExpirationRule'
-$Expiration_EndUser_Assignment.maximumDuration = $RoleActivationMaximumDuration
+$Expiration_EndUser_Assignment = [Expiration_EndUser_Assignment]::New()
+$Expiration_EndUser_Assignment.maximumDuration = "PT600H"
 $Expiration_EndUser_Assignment.isExpirationRequired = $true
 $Expiration_EndUser_Assignment.target.level = 'Assignment'
+#endregion
+
+#region Creating rules array
+$policySettings = @()
+
+#$policySettings += $Expiration_Admin_Eligibility
+#$policySettings += $Enablement_EndUser_Assignment
+$policySettings += $Expiration_EndUser_Assignment
+
+$policyObject.properties.rules = $policySettings
+#endregion
 #endregion
 
 $policySettings = @()
 
 $policySettings += $Expiration_EndUser_Assignment
+#$policySettings += $Enablement_EndUser_Assignment
 
 $policyObject.properties.rules = $policySettings
 $policyObject.properties.rules
 
 #region update policy 
 $policyUpdate = $policyObject | ConvertTo-Json -Depth 99
-$policyUpdate
-Invoke-AzRest -Path "$($resourceId)/providers/Microsoft.Authorization/roleManagementPolicies/$($policyName)?api-version=2020-10-01-preview" -Method PATCH -Payload $policyUpdate
+Write-Verbose $policyUpdate
+Invoke-AzRest -Path "$($resourceId)/providers/Microsoft.Authorization/roleManagementPolicies/$($policyName)?api-version=$($apiVersion)" -Method PATCH -Payload $policyUpdate -Debug
 #endregion
