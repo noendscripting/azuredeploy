@@ -56,9 +56,6 @@ class Target {
     [string]$caller 
     [string[]]$operations = @("All")
     [string]$level
-   #[object]$targetObjects = $null
-   #[object]$enforcedSettings = $null
-   #[object]$inheritableSettings = $null
 }
 
 #class for policy settings array 
@@ -145,23 +142,49 @@ $policyResult = (Invoke-AzRest -Path "$($resourceId)/providers/Microsoft.Authori
 $policyResult | Out-File ./policyResult.json -Force
 $policyName = ($policyResult | ConvertFrom-Json).value.name
 
+#region create support class intances
+$ruleType = [ruleType]::New()
+$caller = [Caller]::New()
+#endregion
+
 #region create root policy object
 $policyObject = [PolicySettings]::New()
 #endregion
 
-#region Setting Role Assignment Rules
-$Expiration_Admin_Eligibility = [Expiration_Admin_Eligibility]::New()
+#region Assigniment Settings 
+
+#Setting Role Assignment Rules
+$Expiration_Admin_Eligibility = [Expiration]::New()
 $Expiration_Admin_Eligibility.isExpirationRequired = $false
 $Expiration_Admin_Eligibility.target.level = 'Eligibility'
+$Expiration_Admin_Eligibility.id = "Expiration_Admin_Eligibility"
+$Expiration_Admin_Eligibility.maximumDuration = ""
+$Expiration_Admin_Eligibility.ruleType = $ruleType.RoleManagementPolicyExpirationRule
+$Expiration_Admin_Eligibility.target.caller = $caller.Admin
+
+#Setting role assigniment expiration rules
+$Expiration_Admin_Assignment = [Expiration]::New()
+$Expiration_Admin_Assignment.isExpirationRequired = $true
+$Expiration_Admin_Assignment.id = "Expiration_Admin_Assignment"
+$Expiration_Admin_Assignment.maximumDuration = "P180D"
+$Expiration_Admin_Assignment.ruleType = $ruleType.RoleManagementPolicyExpirationRule
+$Expiration_Admin_Assignment.target.level = "Assignment"
+$Expiration_Admin_Assignment.target.caller = $caller.Admin
+
+#setting active role  assigniment settings (justification or\and MFA)
+$Enablement_Admin_Assignment = [Enablement]::New()
+$Enablement_Admin_Assignment.enabledRules = @("Justification")
+$Enablement_Admin_Assignment.id = "Enablement_Admin_Assignment"
+$Enablement_Admin_Assignment.ruleType = "RoleManagementPolicyEnablementRule"
+$Enablement_Admin_Assignment.target.level = "Assignment"
+$Enablement_Admin_Assignment.target.caller = $caller.Admin
+
+
+
+
 #endregion
 
-#region create support class intances
-
-$ruleType = [ruleType]::New()
-$caller = [Caller]::New()
-
-
-#endregion 
+ 
 #region Setting Activation Rules
 
 #set role duration settings
@@ -350,6 +373,8 @@ $policySettings += $Notification_Approver_EndUser_Assignment
 $policySettings += $Notification_Requestor_Admin_Assignment
 $policySettings += $Notification_Admin_Admin_Eligibility #
 $policySettings += $Notification_Admin_Admin_Assignment
+$policySettings += $Expiration_Admin_Assignment
+$policySettings += $Enablement_Admin_Assignment
 $policyObject.properties.rules = $policySettings
 #endregion
 
