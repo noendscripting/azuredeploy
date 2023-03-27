@@ -19,7 +19,6 @@
   #if selected true add as many approvers as needed in following id="<AAD GUID>",description="<AAD DisplayName>",isBackUp="<true or false>",usertype="<User or Group>"
  -approver:{id="c72990ad-8cf9-45dd-ab9a-016d2dd88c67",description="GiveMeAccess",isBackUp="false",usertype="Group"} 
  -approver:{id="c72990ad-8cf9-45dd-ab9a-016d2dd88c67",description="GiveMeAccess",isBackUp="false",usertype="Group"}
-
 #Assigniment Rules Section
 
 ## Rule to set eligibility duration
@@ -34,6 +33,77 @@
  -isExpirationRequired:true
  #must be entered in dateIntrval format see for details https://www.php.net/manual/en/dateinterval.construct.php
  -maximumDuration:
+## Rule to specify requirments for active assignment
+-ruleName:On active assignment, require
+  #true or false only
+ -multifactorRequired:false
+ -justificationRequired:true
+ 
+
+#Notification Rules
+
+##Send notifications when members are assigned as eligible to this role
+-ruleName:Role assignment alert
+ #true or false only
+ -isDefaultRecipientsEnabled:true
+ #list email addreses seprated by comma
+ -notificationRecipients:
+
+-ruleName:Notification to the assigned user (assignee)
+ #true or false only
+ -isDefaultRecipientsEnabled:true
+ #list email addreses seprated by comma
+ -notificationRecipients:
+
+-ruleName:Request to approve a role assignment renewal/extension
+ #true or false only
+ -isDefaultRecipientsEnabled:true
+ #list email addreses seprated by comma
+ -notificationRecipients:
+
+##Send notifications when members are assigned as active to this role:
+-ruleName:Role assignment alert
+ #true or false only
+ -isDefaultRecipientsEnabled:true
+ #list email addreses seprated by comma
+ -notificationRecipients:
+
+-ruleName:Notification to the assigned user (assignee)
+ #true or false only
+ -isDefaultRecipientsEnabled:true
+ #list email addreses seprated by comma
+ -notificationRecipients:
+
+-ruleName:Request to approve a role assignment renewal/extension
+ #true or false only
+ -isDefaultRecipientsEnabled:true
+ #list email addreses seprated by comma
+ -notificationRecipients:
+
+
+##Send notifications when eligible members activate this role
+
+-ruleName:Role activation alert
+ #true or false only
+ -isDefaultRecipientsEnabled:true
+ #list email addreses seprated by comma
+ -notificationRecipients:
+
+-ruleName:Notification to activated user (requestor)
+ #true or false only
+ -isDefaultRecipientsEnabled:true
+ #list email addreses seprated by comma
+ -notificationRecipients:
+
+-ruleName:Request to approve an activation
+ #true or false only
+ -isDefaultRecipientsEnabled:true
+ #list email addreses seprated by comma
+ -notificationRecipients:
+
+
+
+
 
 
 

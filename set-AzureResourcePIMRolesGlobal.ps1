@@ -28,7 +28,20 @@ param (
 
 #region Classes
 
-
+$classInstanceTable = @{
+    "Activation maximum duration (hours)"                    = "Expiration_EndUser_Assignment"
+    "On activation, require"                                 = "Enablement_EndUser_Assignment"
+    "Require approval to activate"                           = "Approval_EndUser_Assignment"
+    "Allow permanent eligible assignment"                    = "Expiration_Admin_Eligibility"
+    "Allow permanent active assignment"                      = "Expiration_Admin_Assignment"
+    "On active assignment, require"                          = "Enablement_EndUser_Assignment"
+    "Role assignment alert"                                  = "Notification_Admin_Admin_Eligibility"
+    "Notification to the assigned user (assignee)"           = "Notification_Requestor_Admin_Eligibility"
+    "Request to approve a role assignment renewal/extension" = "Notification_Approver_Admin_Eligibility"
+    "Role activation alert"                                  = "Notification_Admin_EndUser_Assignment"
+    "Notification to activated user (requestor)"             = "Notification_Requestor_EndUser_Assignment"
+    "Request to approve an activation"                       = "Notification_Approver_EndUser_Assignment"
+}
 
 
 Class ruleType {
@@ -39,10 +52,7 @@ Class ruleType {
     [string]$RoleManagementPolicyAuthenticationContextRule = 'RoleManagementPolicyAuthenticationContextRule'
 }
 
-Class Caller {
-    [string]$Admin = "Admin"
-    [string]$Enduser = "EndUser"
-}
+
 
 Class Approver {
     [string]$id
@@ -69,19 +79,12 @@ class PolicySettings {
 }
 
 
-Class Expiration_Admin_Eligibility {
-    [bool] $isExpirationRequired
-    [string] $maximumDuration
-    [string] $id = 'Expiration_Admin_Eligibility'
-    [string] $ruleType
-    [Target] $target = [Target]::New()
-}
 
 Class Enablement {
       
     [string[]]$enabledRules = @() # possible values "MultiFactorAuthentication", "Justification","Ticketing"
     [string]$id 
-    [string]$ruleType
+    [string]$ruleType = "RoleManagementPolicyEnablementRule"
     [Target]$target = [Target]::New()
     
 }
@@ -91,23 +94,23 @@ Class Expiration {
     [bool]$isExpirationRequired
     [string]$maximumDuration # must use dateInterval , starting with PT and hours only 
     [string]$id
-    [string]$ruleType
+    [string]$ruleType = "RoleManagementPolicyExpirationRule"
     [Target]$target = [Target]::New()
 }
 Class Approval {
       
     [approvalSetting]$setting = [approvalSetting]::New()
     [string]$id 
-    [string]$ruleType
+    [string]$ruleType = "RoleManagementPolicyApprovalRule"
     [Target]$target = [Target]::New()
 
 }
 
 class Notification {
     [string] $id
-    [string] $ruleType
+    [string] $ruleType = "RoleManagementPolicyNotificationRule"
     [string] $notificationType = "Email"
-    [ValidateSet('Approver','Requestor','Admin')]
+    [ValidateSet('Approver', 'Requestor', 'Admin')]
     [string] $recipientType
     [string] $notificationLevel
     [bool] $isDefaultRecipientsEnabled
@@ -142,14 +145,74 @@ $policyResult = (Invoke-AzRest -Path "$($resourceId)/providers/Microsoft.Authori
 $policyResult | Out-File ./policyResult.json -Force
 $policyName = ($policyResult | ConvertFrom-Json).value.name
 
-#region create support class intances
-$ruleType = [ruleType]::New()
-$caller = [Caller]::New()
-#endregion
+
 
 #region create root policy object
 $policyObject = [PolicySettings]::New()
 #endregion
+
+#collecting list of configuration  
+$configData = (select-String -Pattern '^-|^ -' -Path .\test.yml -AllMatches).Line
+
+
+#collecting list of section names from answer file
+$mymatches = $configData | Select-String -Pattern '^[\-].*' -AllMatches | Select-Object -Property Line,LineNumber
+
+
+#lo
+for ($classEntry = 0; $classEntry -lt $mymatches.Length; $classEntry++) {
+    Write-Verbose "Starting values for $($mymatches[$classEntry].Line.Split(':')[1])"
+#setting end of a
+    if ($classEntry -eq ($mymatches.Length - 1)) {
+        $endofClass = $configData.Length
+    }
+    else {
+        $endofClass = ($mymatches[$classEntry + 1].LineNumber - 1)
+    }
+    for ($configEntry = $mymatches[$classEntry].LineNumber; $configEntry -lt $endofClass; $configEntry++) {
+        if ($configData[$configEntry] -match '^ -') {
+            [array]$objectProperties += $configData[$configEntry].Replace(" -", "")             
+        }
+    }
+
+    $classId = $classInstanceTable[$mymatches[$classEntry].Line.Split(':')[1]]
+    $classDetails = $classId.Split('_')
+    $classType = $classDetails[0]
+    $targetLevel = $classDetails[1]
+    $targetCaller = $classDetails[2]
+
+
+    Write-Verbose "Class Name: $($className) of ClassTYpe: $($classType)"
+
+    $classObject = New-Object -TypeName $classType
+    $classObject.id = $classId
+    $classObject.target.level = $targetLevel
+    $classObject.target.caller = $targetCaller
+
+
+    ForEach ($settingsProperty in $objectProperties) {
+
+      $propertyName = $settingsProperty.Split(":")[0]
+      $propertyValue = $settingsProperty.Split(":")[1]
+      if ($propertyName -eq 'approver')
+      {
+        $AprrovalStage = [approvalStage]::New()
+
+      }
+        $classObject | Add-Member -Name $propertyName -Value $propertyValue -Force -MemberType NoteProperty
+
+    }
+
+    $classObject
+    $objectProperties
+    Clear-Variable objectProperties
+    Clear-Variable ClassType
+    Clear-Variable classId
+    Clear-Variable classObject
+
+}
+
+exit
 
 #region Assigniment Settings 
 
@@ -229,13 +292,14 @@ $Approver2.userType = "User"
 
 $AprrovalStage.primaryApprovers += $Approver1
 $AprrovalStage.primaryApprovers += $Approver2
+#endregion
 
 #region notifications when members are assigned as eligible to this role
 
 #Role assignment alert
 $Notification_Admin_Admin_Eligibility = [Notification]::New()
 $Notification_Admin_Admin_Eligibility.id = "Notification_Admin_Admin_Eligibility"
-$Notification_Admin_Admin_Eligibility.ruleType= $ruleType.RoleManagementPolicyNotificationRule
+$Notification_Admin_Admin_Eligibility.ruleType = $ruleType.RoleManagementPolicyNotificationRule
 $Notification_Admin_Admin_Eligibility.isDefaultRecipientsEnabled = $true
 $Notification_Admin_Admin_Eligibility.notificationLevel = "All"
 $Notification_Admin_Admin_Eligibility.notificationRecipients = @()
@@ -360,7 +424,7 @@ $Notification_Approver_EndUser_Assignment.target.level = "Assignment"
 $policySettings = @()
 
 
-$policySettings += $Expiration_Admin_Eligibility
+<#$policySettings += $Expiration_Admin_Eligibility
 $policySettings += $Enablement_EndUser_Assignment
 $policySettings += $Expiration_EndUser_Assignment
 $policySettings += $Approval_EndUser_Assignment
@@ -375,6 +439,7 @@ $policySettings += $Notification_Admin_Admin_Eligibility #
 $policySettings += $Notification_Admin_Admin_Assignment
 $policySettings += $Expiration_Admin_Assignment
 $policySettings += $Enablement_Admin_Assignment
+#>
 $policyObject.properties.rules = $policySettings
 #endregion
 
