@@ -1,51 +1,30 @@
 
+[CmdletBinding()]
 
+param()
 
+$configData = (select-String -Pattern '^-.|.-.' -Path .\test.yml -AllMatches).Line
+$parserStack = New-Object System.Collections.Stack
+$indentIndex = 0
+$deidentIndex = 0
 
-$configData = (select-String -Pattern '^(?!.*#).*$' -Path .\test.yml -AllMatches).Line
-
-$mymatches = $configData | Select-String -Pattern '^[\-].*' -AllMatches
-
-for ($classEntry = 0;$classEntry -lt $mymatches.Length; $classEntry++){
-    write-host "Starting values for $($mymatches[$classEntry].Line.Split(':')[1])"
-    if ($classEntry -eq ($mymatches.Length - 1))
+foreach ($configLine in $configData)
+{
+    $spacesCount = ($confuigLine | Select-String "^\s+").Length
+    Write-Verbose "Line $($configLine) has $($spacesCount) space(s) in front"
+    if ($spacesCount -eq $indentIndex)
     {
-        $endofClass = ($configData.Length)
+        $parserStack.Push($configLine)
     }
-    else {
-        $endofClass = ($mymatches[$classEntry+1].LineNumber - 1)
-    }
-    for ($configEntry = $mymatches[$classEntry].LineNumber; $configEntry -lt $endofClass; $configEntry++)
-    {
-        [array]$objectProperties += $configData[$configEntry].Replace(" -","")
-
-
-        
+    elseif ($spacesCount -gt $indentIndex ) {
+        $deidentIndex = $indentIndex
+        $indentIndex = $spacesCount
+        $parserStack.Pop()
+        $parserStack.Push($configLine)
        
-        
-       
-        
-
     }
-    $title = $mymatches[$classEntry].Line.Split(':')[1].Replace('"','')
-    switch -Exact ($mymatches[$classEntry].Line.Split(':')[1].Replace('"',''))
-    {
-        "Activation maximum duration (hours)" {
-            Write-Host "Expiration_EndUser_Assignment found"
-            Break
-    }
-    "On activation, require"{
-        Write-Host "Enablement_EndUser_Assignment found"
-        Break
-    }
-    "Require approval to activate"{
-        Write-Host "Approval_EndUser_Assignment found"
-        Break
-    }
-}
-    $objectProperties
-    Clear-Variable objectProperties
-Write-Host "---------------"
-
 
 }
+
+
+
