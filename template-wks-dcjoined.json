@@ -4,7 +4,7 @@
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "EastUs2"
+      "defaultValue": "EastUs"
     },
     "virtualMachineName": {
       "type": "string"
@@ -98,11 +98,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "MicrosoftVisualStudio",
-            "offer": "Windows",
-            //"sku": "Win7-SP1-Ent-N-x64",
-            "sku": "[parameters('sku')]",
-            
+            "publisher": "microsoftwindowsdesktop",
+            "offer": "windows-11",
+            "sku": "win11-21h2-ent",
             "version": "latest"
           },
           "osDisk": {

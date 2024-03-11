@@ -4,7 +4,7 @@
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "EastUs2"
+      "defaultValue": "EastUs"
     },
     "virtualMachineName": {
       "type": "string"
@@ -19,7 +19,7 @@
     },
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "LimitedVnet"
+      "defaultValue": "VNET-LAB"
     },
     "adminPassword": {
       "type": "securestring",
@@ -27,7 +27,7 @@
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "FirstSubnet"
+      "defaultValue": "DCSubnet"
     },
     "publicIpAddressType": {
       "type": "string",
@@ -45,7 +45,7 @@
     
     "virtualNetResourceGroupName": {
       "type": "string",
-      "defaultValue": "NetworkSubnet"
+      "defaultValue": "Network-RG"
     }
 
   },
@@ -86,13 +86,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "MicrosoftVisualStudio",
-            //"publisher": "MicrosoftWindowsServer",
-            "offer": "Windows",
-            //"offer": "WindowsServer",
-            //"sku": "Win7-SP1-Ent-N-x64",
-            "sku": "Windows-10-N-x64",
-            //"sku":"2019-Datacenter",
+            "publisher": "microsoftwindowsdesktop",
+            "offer": "windows-11",
+            "sku": "win11-21h2-ent",
             "version": "latest"
           },
           "osDisk": {
