@@ -1,0 +1,2 @@
+"ExcludeApplications","IncludeApplications","AdditionalProperties","IncludeUserActions","ApplicationFilter","IncludeAuthenticationContextClassReferences"
+"System.String[]","System.String[]","System.Collections.Generic.Dictionary`2[System.String,System.Object]","System.String[]","Microsoft.Graph.PowerShell.Models.MicrosoftGraphConditionalAccessFilter","System.String[]"
