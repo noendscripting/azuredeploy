@@ -9,84 +9,180 @@
 param(
     $outPutFolder = "C:\temp\CA"
 )
+
+function Build-OutputArray {
+    param (
+        [array]$Settings,
+        [string]$Id,
+        [string]$Name,
+        [string]$Area,
+        [string]$propertyName,
+        [string]$PolicyName
+    )
+
+    $redexGUID = "^(\\{){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(\\}){0,1}$"
+    If ($Settings -eq $null -or $Settings.Length -eq 0) {
+        $data = New-Object PsCustomObject -Property @{
+            Id                = $Id
+            PropertyName      = $propertyName
+            PropertySetting   = ""
+            ConditionName     = $Name
+            PolicySection     = $Area
+            PolicyDisplayName = $PolicyName
+        }
+        #$outputArray += $data
+        return $data
+    }
+    foreach ($value in $Settings) {
+        if ($value -match $redexGUID) {
+            $expandedValue = Find-Resources -type $Name -data $value
+            $data = New-Object PsCustomObject -Property @{
+                Id                = $Id
+                PropertyName      = $propertyName
+                PropertySetting   = $expandedValue
+                ConditionName     = $Name
+                PolicySection     = $Area
+                PolicyDisplayName = $PolicyName
+            }
+            $data  
+        } 
+        else {        
+            $data = New-Object PsCustomObject -Property @{
+                Id                = $Id
+                PropertyName      = $propertyName
+                PropertySetting   = $value
+                ConditionName     = $Name
+                PolicySection     = $Area
+                PolicyDisplayName = $PolicyName
+            }
+            $data    
+        }
+    }
+    
+}
+
 Function Get-nestedProperties {  
     param(
-        $policySettings
+        $policySettings,
+        [string]$CaId,
+        [string]$conditionName,
+        [string]$policyArea,
+        [string]$displayName
+
     )
-    [PSCustomObject]$dataHash = @{} 
-    ForEach ($propertyName in ($policySettings | Get-Member  -MemberType Property).Name) {    
+    ForEach ($policyName in $policySettings.Keys ) {
         
-    If ($policySettings.$propertyName -eq $null) {
-        $propertyValue = ""
-        $dataHash[$propertyName] = $propertyValue
-    }
-    elseif ($policySettings.$propertyName.GetType().Name -eq "String[]") {
-            
-            $propertyValue = $policySettings.$propertyName
-            $dataHash[$propertyName] = $propertyValue -join ","
-        }
-    else {
-            <# Action when all if and elseif conditions are false #>
-        
-        switch ($propertyName.ToString()) {
-                       
-            "includeAllApplications" {
-                $propertyValue = $policySettings.$propertyName
-                $dataHash[$propertyName] = $propertyValue -join ","
-               
-            }
-            "excludeAllApplications" {
-                $propertyValue = $policySettings.$propertyName
-                $dataHash[$propertyName] = $propertyValue -join ","
-            }
-            "IncludeAuthenticationContextClassReferences" {
-                $propertyValue = $policySettings.$propertyName
-                $dataHash[$propertyName] = $propertyValue -join ","
-            }
-            
-            "applicationFilter"
-            {
-                $propertyValue = $policySettings.$propertyName
-                $dataHash[$propertyName] = $propertyValue -join ","
+        $policyValue = $policySettings.$policyName
+        switch ($policyName.ToString()) {
+            "applicationFilter" {
+                $modeValue = $policySettings.$policyName.Mode
+                Build-OutputArray -Settings $modeValue -Id $caId -Name $conditionName -Area $policyArea -propertyName "$($policyName)Mode" -PolicyName $displayName
+                $ruleValue = $policySettings.$policyName.Rule
+                Build-OutputArray -Settings $ruleValue -Id $caId -Name $conditionName -Area $policyArea -propertyName "$($policyName)Rule"-PolicyName $displayName
+                continue
             }
             
             "IncludeGuestsOrExternalUsers" {
-                $propertyValue = $userSettings.$propertyName
-                $dataHash[$propertyName] = $propertyValue -join ","
+                $userValue = $policySettings.$policyName.guestOrExternalUserTypes
+                Build-OutputArray -Settings $userValue -Id $caId -Name $conditionName -Area $policyArea -propertyName "$($policyName)guestOrExternalUserTypes" -PolicyName $displayName
+                $tenantValue = Build-ExternalTenants -extenalTenantSettings $policySettings.$policyName.externalTenants
+                Build-OutputArray -Settings $tenantValue -Id $caId -Name $conditionName -Area $policyArea -propertyName "$($policyName)tennats" -PolicyName $displayName                       
+                continue
             }
             
             "excludeGuestsOrExternalUsers" {
-                $propertyValue = $userSettings.$propertyName
-                $dataHash[$propertyName] = $propertyValue -join ","
+                $userValue = $policySettings.$policyName.guestOrExternalUserTypes
+                Build-OutputArray -Settings $userValue -Id $caId -Name $conditionName -Area $policyArea -propertyName "$($policyName)guestOrExternalUserTypes" -PolicyName $displayName
+                $tenantValue = Build-ExternalTenants -extenalTenantSettings $policySettings.$policyName.externalTenants
+                Build-OutputArray -Settings $tenantValue -Id $caId -Name $conditionName -Area $policyArea -propertyName "$($policyName)tennats" -PolicyName $displayName
+                continue
             }
-            "DeviceFilter"
-            {
-                $modeValue = $policySettings.$propertyName.Mode
-                $dataHash['Mode'] = $modeValue
-                $ruleValue = $policySettings.$propertyName.Rule
-                $dataHash['Rule'] = $ruleValue
+            "includeAuthenticationContextClassReferences" {
+                $authValue = Find-AuthenticationContextClassReferences -authSettings  $policyValue
+                Build-OutputArray -Settings $authValue -Id $caId -Name $conditionName -Area $policyArea -propertyName $policyName -PolicyName $displayName
+                continue
+            }
+            "DeviceFilter" {
+                $modeValue = $policySettings.$policyName.Mode
+                Build-OutputArray -Settings $modeValue -Id $caId -Name $conditionName -Area $policyArea -propertyName "$($policyName)Mode"-PolicyName $displayName
+                $ruleValue = $policySettings.$policyName.Rule
+                Build-OutputArray -Settings $ruleValue -Id $caId -Name $conditionName -Area $policyArea -propertyName "$($policyName)Rule" -PolicyName $displayName
+                continue
 
             }
-            "ExcludePlatforms"
+            "includeLocations"
             {
-                $propertyValue = $policySettings.$propertyName
-                $dataHash[$propertyName] = $propertyValue -join ","
+                foreach ($locationId in $policyValue) {
+                    $locationSettings = Build-LocationArray -locationData $locationId
+                    
+                }
             }
-            "IncludePlatforms"
+            "excludeLocations"
             {
-                $propertyValue = $policySettings.$propertyName
-                $dataHash[$propertyName] = $propertyValue -join ","
+                $locationSettings = Build-LocationArray
             }
             default {
-                $propertyValue = "New Property Type No processing code available"
-                $dataHash[$propertyName] = $propertyValue
+                Build-OutputArray -Settings $policyValue -Id $CaId -Name $conditionName -Area $policyArea -propertyName $policyName -PolicyName $displayName
+                continue
             }
-        }
-    }     
+        }           
+        
+        
     }
-    return $dataHash
+
+    
 }
 
+function Build-ExternalTenants {
+    param(
+        $extenalTenantSettings
+    )
+    if ($extenalTenantSettings.membershipKind -eq "All") {
+        return "All"
+    }
+    else {
+        return $extenalTenantSettings.members
+    }
+    
+
+
+
+}
+function Find-AuthenticationContextClassReferences {
+    param (
+        $authSettings
+    )
+    [string[]]$outputArray = $()
+    $authSettings | ForEach-Object {
+        $outputArray += (Get-MgIdentityConditionalAccessAuthenticationContextClassReference -AuthenticationContextClassReferenceId $_).DisplayName
+    }
+    return $outputArray
+}
+
+function Find-Resources {
+    param (
+        $type,
+        $data
+    )
+
+    switch ($type) {
+        'applications' {
+            return (Get-MgApplication -Filter "appId eq '$data'").DisplayName
+
+        }
+        'users' {
+            return (Get-MgDirectoryObject -DirectoryObjectId $data).AdditionalProperties.displayName
+        }
+        Default {}
+    }
+    
+}
+function Build-LocationArray {
+    param (
+        $locationId
+    )
+    
+}
 
 
 #Check if the user has the appropriate roles
@@ -97,74 +193,68 @@ If ([string]::IsNullOrEmpty($currentRoles)) {
     Throw "No roles found. Please login with a user that has the appropriate roles" 
 }
 
-
+$results = @()
 
 #Get all the policies
 $listPolicyIds = (Get-MgIdentityConditionalAccessPolicy -Select "id" -PageSize 200).Id
 write-verbose "Found $($listPolicyIds.count) policies"
-
+Remove-Item -Path "c:\temp\capolicy.csv" -Force
 forEach ($policyId in $listPolicyIds) {
     
-    New-Item -ItemType Directory -Path $outPutFolder -Name $policyId -Force
-    $outputFilePrefix = "$outPutFolder\$policyId\$policyId"
-    $policyData = Get-MgIdentityConditionalAccessPolicy -Filter "id eq '$policyId'"
+    #$outputFilePrefix = "$outPutFolder\$policyId\$policyId"
+    #$policyData = Get-MgIdentityConditionalAccessPolicy -Filter "id eq '$policyId'"
+    $policyData = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies/$policyId" -Method Get
+    $conditions = $policyData.Conditions 
+    $displayName = $policyData.DisplayName
 
-    #Save basic policy data
-    $policyData | Select-Object -Property id, DisplayName, CreatedDateTime, ModifiedDateTime, State, TemplateId | Export-Csv -Path "$($outputFilePrefix)_basic.csv" -Force -NoTypeInformation
-    $conditions = $policyData.Conditions
-
-    foreach ($conditionName in ($conditions| Get-Member -MemberType Property).Name)
-    {
-        if ($conditions.$conditionName.GetType().Name -eq "String[]") {
-            $conditionValues = $conditions.$conditionName
-            #[PSCustomObject]$conditionPolicies = Get-nestedProperties -policySettings $conditionValues
-            [PSCustomObject]$conditionPolicies[$conditionName] = $conditionValues -join ","
-            [PSCustomObject]$conditionPolicies | Export-Csv -Path "$($outputFilePrefix)_$($conditionName).csv" -Force -NoTypeInformation
+    foreach ($conditionName in $conditions.Keys) {
+        $conditionValues = $conditions.$conditionName
+        if ($conditionName -ne "locations") {
+            #-or $conditionName -ne "clientAppTypes" -or $conditionName -ne "locations" -or $conditionName -ne "platforms" -or $conditionName -ne "signInRiskLevels" -or $conditionName -ne "userRiskLevels" -or $conditionName -ne "servicePrincipalRiskLevels") 
             continue
         }
-        else {
-
-        $conditionValues = $policyData.Conditions.$conditionName
-        [PSCustomObject]$conditionPolicies = Get-nestedProperties -policySettings $conditionValues
-        [PSCustomObject]$conditionPolicies | Export-Csv -Path "$($outputFilePrefix)_$($conditionName).csv" -Force -NoTypeInformation
+        if ($conditionValues -eq $null) {
+            $results += Build-OutputArray -Settings "" -Id $policyId -Name $conditionName -Area "Conditions" -propertyName $conditionName -PolicyName $displayName
             
         }
+        elseif ($conditionValues.GetType().Name -eq "String" -or $conditionValues.GetType().Name -eq "Object[]") {
+            [array]$settingsArray = $conditionValues.Split(",")
+            $results += Build-OutputArray -Settings $settingsArray -Id $policyId -Name $conditionName -Area "Conditions" -propertyName $conditionName -PolicyName $displayName
+        }
+        elseif ($conditionValues.GetType().Name -eq "Hashtable" ) {
+            $results += Get-nestedProperties -policySettings $conditionValues -CaId $policyId -conditionName $conditionName -policyArea "Conditions" -displayName $displayName
+        }
+        else {
+            Write-Host "$($displayName) $($policySettings.GetType().Name)"
+        }
+    
         
         
+}
+    
+#Save basic policy data
+#$policyData | Select-Object -Property id, DisplayName, CreatedDateTime, ModifiedDateTime, State, TemplateId | Export-Csv -Path "$($outputFilePrefix)_basic.csv" -Force -NoTypeInformation
+  
+    
+$results | Select-Object -Property PolicyDisplayName, Id, PolicySection, ConditionName, PropertyName, PropertySetting | Export-Csv -Path "c:\temp\capolicy.csv" -NoTypeInformation -Append
+Exit      
+
+} 
+
         
-    }
-   <# #Save user conditions data
-    $userSettings = $policyData.Conditions.Users
-    [PSCustomObject]$userPolicies = Get-nestedProperties -policySettings $userSettings
-    [PSCustomObject]$userPolicies | Export-Csv -Path "$($outputFilePrefix)_users.csv" -Force -NoTypeInformation
-
-    #Save application conditions data
-    $appSettings = $policyData.Conditions.Applications
-    [PSCustomObject]$appPolicies = Get-nestedProperties -policySettings $appSettings
-    [PSCustomObject]$appPolicies | Export-Csv -Path "$($outputFilePrefix)_applications.csv" -Force -NoTypeInformation
-
-    #Save device conditions data
-    $deviceSettings = $policyData.Conditions.Devices
-    [PSCustomObject]$devicePolicies = Get-nestedProperties -policySettings $deviceSettings
-    [PSCustomObject]$devicePolicies | Export-Csv -Path "$($outputFilePrefix)_devices.csv" -Force -NoTypeInformation
-
-    #Save platforms conditions data
-    $platformSettings = $policyData.Conditions.Platforms
-    [PSCustomObject]$platformPolicies = Get-nestedProperties -policySettings $platformSettings
-    [PSCustomObject]$platformPolicies | Export-Csv -Path "$($outputFilePrefix)_platforms.csv" -Force -NoTypeInformation
-#>
+        
 
     
-    #Other conditions
-    #"userRiskLevels"
-    #"signInRiskLevels": [],
-    #"clientAppTypes": 
-    #"servicePrincipalRiskLevels": [],
-    #"platforms": null,
-    #"locations": null,
-    #"clientApplications": null,
-    Exit
+
+    
+#Other conditions
+#"userRiskLevels"
+#"signInRiskLevels": [],
+#"clientAppTypes": 
+#"servicePrincipalRiskLevels": [],
+#"platforms": null,
+#"locations": null,
+#"clientApplications": null,
 
     
      
-}
