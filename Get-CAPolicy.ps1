@@ -284,7 +284,8 @@ if (Test-Path  $outPutFilePath ) {
     Remove-Item -Path  $outPutFilePath  -Force
 }
 
-$results = @()
+$results = New-Object System.Collections.ArrayList
+$PSStyle.Progress.View = 'Minimal'
 If ($policyName -eq "all") {
     #Get all the policies
 $listPolicyIds = (Get-MgBetaIdentityConditionalAccessPolicy  -Select "id" -PageSize 200).Id
@@ -294,10 +295,13 @@ else {
     $listPolicyIds = (Get-MgBetaIdentityConditionalAccessPolicy  -Select "id" -Filter "displayName eq '$($policyName)'").Id
 }
 
-
+$processed = 0
 
 forEach ($policyId in $listPolicyIds) {
+   
+    $processedPercent = ($processed / $listPolicyIds.Count) * 100
     
+    Write-Progress -Activity "Processing Policies" -Status "Processing Policy $policyId" -PercentComplete $processedPercent
     try {
         $policyData = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies/$policyId" -Method Get
     }
@@ -321,23 +325,32 @@ forEach ($policyId in $listPolicyIds) {
     $grants = $policyData.GrantControls
     $sessionControls = $policyData.SessionControls
     $displayName = $policyData.DisplayName
-    $results += Build-OutputArray -Settings $policyData.templateId -Id $policyId -Name 'templateId' -Area "Base" -propertyName 'templateId' -PolicyName $displayName
-    $results += Build-OutputArray -Settings $policyData.createdDateTime -Id $policyId -Name 'createdDateTime' -Area "Base" -propertyName 'createdDateTime' -PolicyName $displayName
-    $results += Build-OutputArray -Settings $policyData.modifiedDateTime -Id $policyId -Name 'modifiedDateTime' -Area "Base" -propertyName 'modifiedDateTime' -PolicyName $displayName
-    $results += Build-OutputArray -Settings $policyData.state -Id $policyId -Name 'state' -Area "Base" -propertyName 'state' -PolicyName $displayName
     
+    [void]$results.Add((Build-OutputArray -Settings $policyData.templateId -Id $policyId -Name 'templateId' -Area "Base" -propertyName 'templateId' -PolicyName $displayName))
+    [void]$results.Add((Build-OutputArray -Settings $policyData.createdDateTime -Id $policyId -Name 'createdDateTime' -Area "Base" -propertyName 'createdDateTime' -PolicyName $displayName))
+    [void]$results.Add((Build-OutputArray -Settings $policyData.createdDateTime -Id $policyId -Name 'createdDateTime' -Area "Base" -propertyName 'createdDateTime' -PolicyName $displayName))
+    [void]$results.Add((Build-OutputArray -Settings $policyData.modifiedDateTime -Id $policyId -Name 'modifiedDateTime' -Area "Base" -propertyName 'modifiedDateTime' -PolicyName $displayName))
+    [void]$results.Add((Build-OutputArray -Settings $policyData.state -Id $policyId -Name 'state' -Area "Base" -propertyName 'state' -PolicyName $displayName))
     foreach ($conditionName in $conditions.Keys) {
         $conditionValues = $conditions.$conditionName
+        $outputData = $null
         if ($conditionValues.Length -eq 0)  {
-            $results += Build-OutputArray -Settings "" -Id $policyId -Name $conditionName -Area "Conditions" -propertyName $conditionName -PolicyName $displayName
+            [void]$results.Add((Build-OutputArray -Settings "" -Id $policyId -Name $conditionName -Area "Conditions" -propertyName $conditionName -PolicyName $displayName))
             
         }
         elseif ($conditionValues.GetType().Name -eq "String" -or $conditionValues.GetType().Name -eq "Object[]") {
             [array]$settingsArray = $conditionValues.Split(",")
-            $results += Build-OutputArray -Settings $settingsArray -Id $policyId -Name $conditionName -Area "Conditions" -propertyName $conditionName -PolicyName $displayName
+            $outputData = Build-OutputArray -Settings $settingsArray -Id $policyId -Name $conditionName -Area "Conditions" -propertyName $conditionName -PolicyName $displayName
+
+            forEach ($output in $outputData){
+            [void]$results.Add($output)
+            }
         }
         elseif ($conditionValues.GetType().Name -eq "Hashtable" ) {
-            $results += Get-nestedProperties -policySettings $conditionValues -CaId $policyId -conditionName $conditionName -policyArea "Conditions" -displayName $displayName
+            $outputData = Get-nestedProperties -policySettings $conditionValues -CaId $policyId -conditionName $conditionName -policyArea "Conditions" -displayName $displayName
+            forEach ($output in $outputData){
+                [void]$results.Add($output)
+            }
         }
         else {
             Write-Host "$($displayName) $($policySettings.GetType().Name)"
@@ -347,21 +360,28 @@ forEach ($policyId in $listPolicyIds) {
     
   
     forEach ($grantName in $grants.Keys) {
-        $grantValue = $null
+        $outputData = $null
         $grantValue = $grants.$grantName
         if ($grantName -eq "authenticationStrength@odata.context") {
             continue
         }
         if ($grantValue.Length -eq 0) {
-            $results += Build-OutputArray -Settings "" -Id $policyId -Name $grantName -Area "GrantControls" -propertyName $grantName -PolicyName $displayName
+            [void]$results.Add((Build-OutputArray -Settings "" -Id $policyId -Name $grantName -Area "GrantControls" -propertyName $grantName -PolicyName $displayName))
             
         }
         elseif ($grantValue.GetType().Name -eq "String" -or $grantValue.GetType().Name -eq "Object[]") {
             [array]$settingsArray = $grantValue.Split(",")
-            $results += Build-OutputArray -Settings $settingsArray -Id $policyId -Name $grantName -Area "GrantControls" -propertyName $grantName -PolicyName $displayName
+            $outputData = Build-OutputArray -Settings $settingsArray -Id $policyId -Name $grantName -Area "GrantControls" -propertyName $grantName -PolicyName $displayName
+            foreach ($output in $outputData){
+                [void]$results.Add($output)
+            }
         }
         elseif ($grantValue.GetType().Name -eq "Hashtable" ) {
-            $results += Get-nestedProperties -policySettings $grantValue -CaId $policyId -conditionName $grantName -policyArea "GrantControls" -displayName $displayName
+
+            $outputData = Get-nestedProperties -policySettings $grantValue -CaId $policyId -conditionName $grantName -policyArea "GrantControls" -displayName $displayName
+            foreach ($output in $outputData){
+                [void]$results.Add($output)
+            }
         }
         else {
             Write-Host "$($displayName) $($policySettings.GetType().Name)"
@@ -369,18 +389,24 @@ forEach ($policyId in $listPolicyIds) {
     }
 
     forEach ($sessionControl in $sessionControls.Keys) {
-        $sessionControlsValue = $null
+        $outputData = $null
         $sessionControlsValue = $sessionControls.$sessionControl
         if ($sessionControlsValue.Length -eq 0) {
-            $results += Build-OutputArray -Settings "" -Id $policyId -Name $sessionControl -Area "SessionControls" -propertyName $sessionControl -PolicyName $displayName
+            [void]$results.Add((Build-OutputArray -Settings "" -Id $policyId -Name $sessionControl -Area "SessionControls" -propertyName $sessionControl -PolicyName $displayName))
             
         }
         elseif ($sessionControlsValue.GetType().Name -eq "String" -or $sessionControlsValue.GetType().Name -eq "Object[]") {
             [array]$settingsArray = $sessionControlsValue.Split(",")
-            $results += Build-OutputArray -Settings $settingsArray -Id $policyId -Name $sessionControl -Area "SessionControls" -propertyName $sessionControl -PolicyName $displayName
+            $outputData = Build-OutputArray -Settings $settingsArray -Id $policyId -Name $sessionControl -Area "SessionControls" -propertyName $sessionControl -PolicyName $displayName
+            foreach ($output in $outputData){
+                [void]$results.Add($output)
+            }
         }
         elseif ($sessionControlsValue.GetType().Name -eq "Hashtable" ) {
-            $results += Get-nestedProperties -policySettings $sessionControlsValue -CaId $policyId -conditionName $sessionControl -policyArea "SessionControls" -displayName $displayName
+            $outputData = Get-nestedProperties -policySettings $sessionControlsValue -CaId $policyId -conditionName $sessionControl -policyArea "SessionControls" -displayName $displayName
+            foreach ($output in $outputData){
+                [void]$results.Add($output)
+            }
         }
         else {
             Write-Host "$($displayName) $($sessionControlsValue.GetType().Name)"
@@ -388,11 +414,10 @@ forEach ($policyId in $listPolicyIds) {
     }
     
     
-          
+        $processed += 1
 
 } 
-
-$results | Select-Object -Property PolicyDisplayName, Id, PolicySection, ConditionName, PropertyName, PropertySetting | Export-Csv -Path $outPutFilePath -NoTypeInformation
+$results | Select-Object -Property PolicyDisplayName, Id, PolicySection, ConditionName, PropertyName, PropertySetting | Export-Csv -Path $outPutFilePath -NoTypeInformation -Append
 
         
         
