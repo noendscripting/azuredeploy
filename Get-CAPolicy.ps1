@@ -9,10 +9,13 @@
 
 
 
-
 param(
     $outPutFilePath = "$($PWD)\capolicy.csv",
-    [string]$policyName = "All"
+    [string]$policyName = "All",
+    [PSDefaultValue(Help='Global Commercial Tenant')]
+    [ValidateSet("China", "Global","USGovDoD","USGov","Germany")]
+    [string]$TenantEnvironment = "Global"
+    
 )
 
 function Build-OutputArray {
@@ -35,7 +38,7 @@ function Build-OutputArray {
             PolicySection     = $Area
             PolicyDisplayName = $PolicyName
         }
-        #$outputArray += $data
+        
         return $data
     }
     foreach ($value in $Settings) {
@@ -116,7 +119,7 @@ Function Get-nestedProperties {
 
             }
             "includeLocations" {
-                If ($policyValue -eq "All") {
+                If ($policyValue -eq "All" -or $policyValue -eq "AllTrusted") {
                     
                     Build-OutputArray -Settings $policyValue -Id $caId -Name "$($conditionName)_$($policyName)_All" -Area $policyArea -propertyName $policyName -PolicyName $displayName
                     continue
@@ -135,7 +138,7 @@ Function Get-nestedProperties {
                 
             }
             "excludeLocations" {
-                If ($policyValue -eq "All") {
+                If ($policyValue -eq "All" -or $policyValue -eq "AllTrusted") {
                     
                     Build-OutputArray -Settings $policyValue -Id $caId -Name "$($conditionName)_$($policyName)_All" -Area $policyArea -propertyName $policyName -PolicyName $displayName
                     continue
@@ -188,7 +191,7 @@ function Find-AuthenticationContextClassReferences {
     )
     [string[]]$outputArray = $()
     $authSettings | ForEach-Object {
-        $outputArray += (Get-MgIdentityConditionalAccessAuthenticationContextClassReference -AuthenticationContextClassReferenceId $_).DisplayName
+        $outputArray += (Invoke-MgGraphRequest "https://$($graphEnvFQDN)/v1.0/identity/conditionalAccess/authenticationContextClassReferences/$($PSItem)").DisplayName
     }
     return $outputArray
 }
@@ -201,11 +204,11 @@ function Find-Resources {
 
     switch ($type) {
         'applications' {
-            return (Get-MgApplication -Filter "appId eq '$data'").DisplayName
+            return (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/applications(appId='$($data)')").displayName 
 
         }
         'users' {
-            return (Get-MgDirectoryObject -DirectoryObjectId $data).AdditionalProperties.displayName
+            return (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/directoryObjects/$($data)").displayName
         }
         Default {}
     }
@@ -279,22 +282,33 @@ If ([string]::IsNullOrEmpty($currentRoles)) {
     Write-Host "No roles found"
     Throw "No roles found. Please login with a user that has the appropriate roles" 
 }
+<#elseif ($currentRoles -notcontains "Policy.Read.All" -and $currentRoles -notcontains "Directory.Read.All") {
+    throw "This script requires the Policy.Read.All and Directory.Read.All permissions. Please login with an appropriate permissions scope"
+}#>
+New-Variable -Name graphEnvFQDN -Value $null -Scope Script -Force
+switch ($TenantEnvironment) {
+    "Global" {$graphEnvFQDN = "graph.microsoft.com"} 
+    "China" {$graphEnvFQDN = "microsoftgraph.chinacloudapi.cn"}
+    "USGovDoD" {$graphEnvFQDN = "dod-graph.microsoft.us"}
+    "USGov" {$graphEnvFQDN = "graph.microsoft.us"}
+    "Germany" {$graphEnvFQDN = "graph.microsoft.de"}
+}
 
 if (Test-Path  $outPutFilePath ) {
     Remove-Item -Path  $outPutFilePath  -Force
 }
 
 $results = New-Object System.Collections.ArrayList
-$PSStyle.Progress.View = 'Minimal'
+#$PSStyle.Progress.View = 'Minimal'
 If ($policyName -eq "all") {
     #Get all the policies
 $listPolicyIds = (Get-MgBetaIdentityConditionalAccessPolicy  -Select "id" -PageSize 200).Id
 write-verbose "Found $($listPolicyIds.count) policies"
 }
 else {
-    $listPolicyIds = (Get-MgBetaIdentityConditionalAccessPolicy  -Select "id" -Filter "displayName eq '$($policyName)'").Id
+    $listPolicyIds = (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/beta/identity/conditionalAccess/policies?$select=id").value.id
 }
-
+exit
 $processed = 0
 
 forEach ($policyId in $listPolicyIds) {
@@ -303,12 +317,12 @@ forEach ($policyId in $listPolicyIds) {
     
     Write-Progress -Activity "Processing Policies" -Status "Processing Policy $policyId" -PercentComplete $processedPercent
     try {
-        $policyData = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies/$policyId" -Method Get
+        $policyData = Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/identity/conditionalAccess/policies/$($policyId)" -Method Get
     }
     catch [Microsoft.Graph.PowerShell.Authentication.Helpers.HttpResponseException]{
         if ($_.ErrorDetails.Message -match "contains preview features")
         {
-            $policyData = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/identity/conditionalAccess/policies/$policyId" -Method Get
+            $policyData = Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/beta/identity/conditionalAccess/policies/$($policyId)" -Method Get
         }
         else {
             Throw "Error getting policy data for $policyId - $($_.ErrorDetails.Message)"
