@@ -1,11 +1,7 @@
 [CmdletBinding()]
-#requires -modules @{Modulename = "Microsoft.Graph.Applications";ModuleVersion="2.16.0"}
+
 #requires -modules @{Modulename = "Microsoft.Graph.Authentication";ModuleVersion="2.16.0"}
-#requires -modules @{Modulename = "Microsoft.Graph.DirectoryObjects";ModuleVersion="2.16.0"}
-#requires -modules @{Modulename = "Microsoft.Graph.Groups";ModuleVersion="2.16.0"}
-#requires -modules @{Modulename = "Microsoft.Graph.Users";ModuleVersion="2.16.0"}
-#requires -modules @{Modulename = "Microsoft.Graph.Identity.SignIns";ModuleVersion="2.16.0"}
-#requires -modules @{Modulename = "Microsoft.Graph.Beta.Identity.SignIns";ModuleVersion="2.16.0"}
+
 
 
 
@@ -17,7 +13,7 @@ param(
     [string]$TenantEnvironment = "Global"
     
 )
-
+$ErrorActionPreference = "Stop"
 function Build-OutputArray {
     param (
         [array]$Settings,
@@ -191,7 +187,7 @@ function Find-AuthenticationContextClassReferences {
     )
     [string[]]$outputArray = $()
     $authSettings | ForEach-Object {
-        $outputArray += (Invoke-MgGraphRequest "https://$($graphEnvFQDN)/v1.0/identity/conditionalAccess/authenticationContextClassReferences/$($PSItem)").DisplayName
+        $outputArray += (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/identity/conditionalAccess/authenticationContextClassReferences/$($PSItem)").DisplayName
     }
     return $outputArray
 }
@@ -204,7 +200,7 @@ function Find-Resources {
 
     switch ($type) {
         'applications' {
-            return (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/applications(appId='$($data)')").displayName 
+            return (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/servicePrincipals(appId='$($data)')").displayName 
 
         }
         'users' {
@@ -299,16 +295,20 @@ if (Test-Path  $outPutFilePath ) {
 }
 
 $results = New-Object System.Collections.ArrayList
-#$PSStyle.Progress.View = 'Minimal'
+if ($PSVersionTable.PSVersion.Major -ge 7) {
+
+    $PSStyle.Progress.View = 'Minimal'
+}
+    
+
 If ($policyName -eq "all") {
     #Get all the policies
-$listPolicyIds = (Get-MgBetaIdentityConditionalAccessPolicy  -Select "id" -PageSize 200).Id
+$listPolicyIds = (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/beta/identity/conditionalAccess/policies").value.id
 write-verbose "Found $($listPolicyIds.count) policies"
 }
 else {
     $listPolicyIds = (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/beta/identity/conditionalAccess/policies?$select=id").value.id
 }
-exit
 $processed = 0
 
 forEach ($policyId in $listPolicyIds) {
