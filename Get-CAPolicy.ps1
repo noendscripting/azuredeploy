@@ -8,9 +8,10 @@
 param(
     $outPutFilePath = "$($PWD)\capolicy.csv",
     [string]$policyName = "All",
-    [PSDefaultValue(Help='Global Commercial Tenant')]
-    [ValidateSet("China", "Global","USGovDoD","USGov","Germany")]
-    [string]$TenantEnvironment = "Global"
+    [PSDefaultValue(Help = 'Global Commercial Tenant')]
+    [ValidateSet("China", "Global", "USGovDoD", "USGov", "Germany")]
+    [string]$TenantEnvironment = "Global",
+    [switch]$RemoveOrphaned
     
 )
 $ErrorActionPreference = "Stop"
@@ -200,11 +201,17 @@ function Find-Resources {
 
     switch ($type) {
         'applications' {
-            return (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/servicePrincipals(appId='$($data)')").displayName 
 
+            try { $appDisplayName = (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/servicePrincipals(appId='$($data)')").displayName }
+            catch { $appDisplayName = $data }
+
+            return $appDisplayName
         }
         'users' {
-            return (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/directoryObjects/$($data)").displayName
+            try { $userDisplayName = (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/directoryObjects/$($data)").displayName }
+            catch { $userDisplayName = $data }
+
+            return $userDisplayName
         }
         Default {}
     }
@@ -215,10 +222,20 @@ function Build-LocationArray {
         $locationId
     )
     $locationOutput = @()
-    $locationData = Get-MgIdentityConditionalAccessNamedLocation -NamedLocationId $locationId
+    Try {
+        $locationData = Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/identity/conditionalAccess/namedLocations/$($locationId)" -Method Get
+    }
+    Catch {
+        $outPutValue = New-Object PsCustomObject -Property @{
+            DisplayName   = $locationId
+            LocationType  = "orphaned"
+            LocationValue = "orphaned"
+        }
+        return $outPutValue
+    }
+
     $locationDisplayName = $locationData.DisplayName
-    $locationSettings = $locationData.AdditionalProperties
-    if ($locationSettings.'@odata.type' -match 'ipNamedLocation') {
+    if ($locationData.'@odata.type' -match 'ipNamedLocation') {
         $ipAdressList = Find-LocationIpRanges -ipRangeData $locationSettings.ipRanges
         forEach ($IpAddress in $ipAdressList) {
             $outPutValue = New-Object PsCustomObject -Property @{
@@ -283,11 +300,11 @@ If ([string]::IsNullOrEmpty($currentRoles)) {
 }#>
 New-Variable -Name graphEnvFQDN -Value $null -Scope Script -Force
 switch ($TenantEnvironment) {
-    "Global" {$graphEnvFQDN = "graph.microsoft.com"} 
-    "China" {$graphEnvFQDN = "microsoftgraph.chinacloudapi.cn"}
-    "USGovDoD" {$graphEnvFQDN = "dod-graph.microsoft.us"}
-    "USGov" {$graphEnvFQDN = "graph.microsoft.us"}
-    "Germany" {$graphEnvFQDN = "graph.microsoft.de"}
+    "Global" { $graphEnvFQDN = "graph.microsoft.com" } 
+    "China" { $graphEnvFQDN = "microsoftgraph.chinacloudapi.cn" }
+    "USGovDoD" { $graphEnvFQDN = "dod-graph.microsoft.us" }
+    "USGov" { $graphEnvFQDN = "graph.microsoft.us" }
+    "Germany" { $graphEnvFQDN = "graph.microsoft.de" }
 }
 
 if (Test-Path  $outPutFilePath ) {
@@ -303,12 +320,17 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
 
 If ($policyName -eq "all") {
     #Get all the policies
-$listPolicyIds = (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/beta/identity/conditionalAccess/policies").value.id
-write-verbose "Found $($listPolicyIds.count) policies"
+    $queryURL = 'https://' + "$($graphEnvFQDN)" + '/beta/identity/conditionalAccess/policies?$select=id'
+    
 }
 else {
-    $listPolicyIds = (Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/beta/identity/conditionalAccess/policies?$select=id").value.id
+    $queryURL = 'https://' + "$($graphEnvFQDN)" + '/beta/identity/conditionalAccess/policies?$filter=displayName eq '''+ "$($policyName)" +'''&$select=id'
+    
+    
 }
+
+$listPolicyIds = (Invoke-MgGraphRequest -Uri $queryURL).value.id
+write-verbose "Found $($listPolicyIds.count) policies"
 $processed = 0
 
 forEach ($policyId in $listPolicyIds) {
@@ -319,9 +341,8 @@ forEach ($policyId in $listPolicyIds) {
     try {
         $policyData = Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/identity/conditionalAccess/policies/$($policyId)" -Method Get
     }
-    catch [Microsoft.Graph.PowerShell.Authentication.Helpers.HttpResponseException]{
-        if ($_.ErrorDetails.Message -match "contains preview features")
-        {
+    catch [Microsoft.Graph.PowerShell.Authentication.Helpers.HttpResponseException] {
+        if ($_.ErrorDetails.Message -match "contains preview features") {
             $policyData = Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/beta/identity/conditionalAccess/policies/$($policyId)" -Method Get
         }
         else {
@@ -348,21 +369,21 @@ forEach ($policyId in $listPolicyIds) {
     foreach ($conditionName in $conditions.Keys) {
         $conditionValues = $conditions.$conditionName
         $outputData = $null
-        if ($conditionValues.Length -eq 0)  {
+        if ($conditionValues.Length -eq 0) {
             [void]$results.Add((Build-OutputArray -Settings "" -Id $policyId -Name $conditionName -Area "Conditions" -propertyName $conditionName -PolicyName $displayName))
             
         }
         elseif ($conditionValues.GetType().Name -eq "String" -or $conditionValues.GetType().Name -eq "Object[]") {
             [array]$settingsArray = $conditionValues.Split(",")
-            $outputData = Build-OutputArray -Settings $settingsArray -Id $policyId -Name $conditionName -Area "Conditions" -propertyName $conditionName -PolicyName $displayName
+            #$outputData = Build-OutputArray -Settings $settingsArray -Id $policyId -Name $conditionName -Area "Conditions" -propertyName $conditionName -PolicyName $displayName
 
-            forEach ($output in $outputData){
-            [void]$results.Add($output)
+            forEach ($output in $outputData) {
+                [void]$results.Add($output)
             }
         }
         elseif ($conditionValues.GetType().Name -eq "Hashtable" ) {
             $outputData = Get-nestedProperties -policySettings $conditionValues -CaId $policyId -conditionName $conditionName -policyArea "Conditions" -displayName $displayName
-            forEach ($output in $outputData){
+            forEach ($output in $outputData) {
                 [void]$results.Add($output)
             }
         }
@@ -386,14 +407,14 @@ forEach ($policyId in $listPolicyIds) {
         elseif ($grantValue.GetType().Name -eq "String" -or $grantValue.GetType().Name -eq "Object[]") {
             [array]$settingsArray = $grantValue.Split(",")
             $outputData = Build-OutputArray -Settings $settingsArray -Id $policyId -Name $grantName -Area "GrantControls" -propertyName $grantName -PolicyName $displayName
-            foreach ($output in $outputData){
+            foreach ($output in $outputData) {
                 [void]$results.Add($output)
             }
         }
         elseif ($grantValue.GetType().Name -eq "Hashtable" ) {
 
             $outputData = Get-nestedProperties -policySettings $grantValue -CaId $policyId -conditionName $grantName -policyArea "GrantControls" -displayName $displayName
-            foreach ($output in $outputData){
+            foreach ($output in $outputData) {
                 [void]$results.Add($output)
             }
         }
@@ -412,13 +433,13 @@ forEach ($policyId in $listPolicyIds) {
         elseif ($sessionControlsValue.GetType().Name -eq "String" -or $sessionControlsValue.GetType().Name -eq "Object[]") {
             [array]$settingsArray = $sessionControlsValue.Split(",")
             $outputData = Build-OutputArray -Settings $settingsArray -Id $policyId -Name $sessionControl -Area "SessionControls" -propertyName $sessionControl -PolicyName $displayName
-            foreach ($output in $outputData){
+            foreach ($output in $outputData) {
                 [void]$results.Add($output)
             }
         }
         elseif ($sessionControlsValue.GetType().Name -eq "Hashtable" ) {
             $outputData = Get-nestedProperties -policySettings $sessionControlsValue -CaId $policyId -conditionName $sessionControl -policyArea "SessionControls" -displayName $displayName
-            foreach ($output in $outputData){
+            foreach ($output in $outputData) {
                 [void]$results.Add($output)
             }
         }
@@ -428,14 +449,12 @@ forEach ($policyId in $listPolicyIds) {
     }
     
     
-        $processed += 1
+    $processed += 1
 
 } 
 $results | Select-Object -Property PolicyDisplayName, Id, PolicySection, ConditionName, PropertyName, PropertySetting | Export-Csv -Path $outPutFilePath -NoTypeInformation -Append
 
         
-        
-
 
 
     
