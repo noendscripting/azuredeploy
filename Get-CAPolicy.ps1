@@ -311,7 +311,7 @@ if (Test-Path  $outPutFilePath ) {
     Remove-Item -Path  $outPutFilePath  -Force
 }
 
-$results = New-Object System.Collections.ArrayList
+$results = [System.Collections.Generic.List[System.Object]]::new()
 if ($PSVersionTable.PSVersion.Major -ge 7) {
 
     $PSStyle.Progress.View = 'Minimal'

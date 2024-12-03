@@ -1,0 +1,64 @@
+{
+  "id": "8bec3ba7-e482-444f-97e5-09c8a85989a6",
+  "templateId": null,
+  "displayName": "BlockUserExceptPIM",
+  "createdDateTime": "2021-01-07T04:59:25.1624284Z",
+  "modifiedDateTime": "2023-09-21T14:34:39.0083519Z",
+  "state": "disabled",
+  "sessionControls": null,
+  "conditions": {
+      "userRiskLevels": [],
+      "signInRiskLevels": [],
+      "clientAppTypes": [
+          "all"
+      ],
+      "servicePrincipalRiskLevels": [],
+      "insiderRiskLevels": null,
+      "platforms": null,
+      "locations": null,
+      "devices": null,
+      "clientApplications": null,
+      "applications": {
+          "includeApplications": [
+              "4ac7d521-0382-477b-b0f8-7e1d95f85ca2",
+              "022907d3-0f1b-48f7-badc-1ba6abab6d66",
+              "372140e0-b3b7-4226-8ef9-d57986796201",
+              "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d",
+              "ce6ff14a-7fdc-4685-bbe0-f6afdfcfa8e0",
+              "0000000a-0000-0000-c000-000000000000",
+              "00000012-0000-0000-c000-000000000000",
+              "05a65629-4c1b-48c1-a78b-804c4abdd4af",
+              "797f4846-ba00-4fd7-ba43-dac1f8f63013",
+              "d4ebce55-015a-49b5-a083-c84d1797ae8c"
+          ],
+          "excludeApplications": [],
+          "includeUserActions": [],
+          "includeAuthenticationContextClassReferences": [],
+          "applicationFilter": null
+      },
+      "users": {
+          "includeUsers": [
+              "7854f4ab-76c9-4e38-aa43-17c25b404012"
+          ],
+          "excludeUsers": [],
+          "includeGroups": [],
+          "excludeGroups": [],
+          "includeRoles": [],
+          "excludeRoles": [],
+          "includeGuestsOrExternalUsers": null,
+          "excludeGuestsOrExternalUsers": null
+      }
+  },
+  "grantControls": {
+      "operator": "OR",
+      "builtInControls": [
+          "block"
+      ],
+      "customAuthenticationFactors": [],
+      "termsOfUse": [],
+      "authenticationStrength@odata.context": "https://graph.microsoft.com/v1.0/$metadata#identity/conditionalAccess/policies('8bec3ba7-e482-444f-97e5-09c8a85989a6')/grantControls/authenticationStrength/$entity",
+      "authenticationStrength": null
+  }
+}
+
+@{DisplayName=Block all legacy sign-ins that don't support MFA; State=enabled}

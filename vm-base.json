@@ -180,7 +180,8 @@
 
   },
   "variables": {
-    "vmNICDeployementName":"[concat(parameters('virtualMachineName'),'NIC',deployment().name)]"
+    "vmNICDeployementName":"[concat(parameters('virtualMachineName'),'NIC',deployment().name)]",
+    "windowsAdminCenterPort": 6516
   },
   "resources": [
     {
@@ -270,8 +271,26 @@
       
 
 
+  },
+  {
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "apiVersion": "2021-11-01",
+    "name": "[format('{0}/{1}', parameters('virtualMachineName'),'AdminCenter')]",
+    "location": "[resourceGroup().location]",
+    "properties": {
+      "publisher": "Microsoft.AdminCenter",
+      "type": "AdminCenter",
+      "typeHandlerVersion": "0.0",
+      "autoUpgradeMinorVersion": true,
+      "settings": {
+        "port": "[variables('windowsAdminCenterPort')]",
+        "salt": "[guid(resourceGroup().id, parameters('virtualMachineName'))]"
+      }
+    },
+    "dependsOn": [
+      "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
+    ]
   }
-  
     
   ],
   "outputs": {

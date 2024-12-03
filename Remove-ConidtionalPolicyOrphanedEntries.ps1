@@ -22,7 +22,7 @@ param(
     [switch]$Applications
     
 )
-
+<#
 class ConditionalAccessPolicy
     {
         
@@ -48,6 +48,8 @@ class ConditionalAccessPolicy
         [string[]]$excludeApplications
         [string[]]$includeApplications
     }
+   #>
+
    
 
 $ErrorActionPreference = "Stop"
@@ -90,7 +92,7 @@ if ($AllSections) {
 }
 
 Write-Host $Parameterlist
-exit 
+
 $listPolicyIds = (Invoke-MgGraphRequest -Uri $queryURL).value.id
 write-verbose "Found $($listPolicyIds.count) policies"
 $processed = 0
@@ -98,14 +100,14 @@ forEach ($policyId in $listPolicyIds) {
    
     $processedPercent = ($processed / $listPolicyIds.Count) * 100
     
-    Write-Progress -Activity "Processing Policies" -Status "Processing Policy $policyId" -PercentComplete $processedPercent
-    $policyData = Get-MgBetaIdentityConditionalAccessPolicy -ConditionalAccessPolicyId $policyId
- <#   try {
-        $policyData = Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/identity/conditionalAccess/policies/$($policyId)" -Method Get
+    #Write-Progress -Activity "Processing Policies" -Status "Processing Policy $policyId" -PercentComplete $processedPercent
+    #$policyData = Get-MgBetaIdentityConditionalAccessPolicy -ConditionalAccessPolicyId $policyId
+   try {
+        $policyData = Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/v1.0/identity/conditionalAccess/policies/$($policyId)" -Method Get -OutputType PSObject
     }
     catch [Microsoft.Graph.PowerShell.Authentication.Helpers.HttpResponseException] {
         if ($_.ErrorDetails.Message -match "contains preview features") {
-            $policyData = Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/beta/identity/conditionalAccess/policies/$($policyId)" -Method Get
+            $policyData = Invoke-MgGraphRequest -Uri "https://$($graphEnvFQDN)/beta/identity/conditionalAccess/policies/$($policyId)" -Method Get -OutputType PSObject
         }
         else {
             Throw "Error getting policy data for $policyId - $($_.ErrorDetails.Message)"
@@ -115,11 +117,16 @@ forEach ($policyId in $listPolicyIds) {
     catch {
         
         Throw "Error getting policy data for $policyId - $($_.Message)"
-    } #>
+    }
 
-   
-
-   ForEach($propertyName in ($policyData.Conditions.users | Get-Member  -MemberType Property).name  ) 
+    $policyObject = @{}
+    $policyObject.displayName = $policyData.DisplayName
+    $policyObject.conditions = $policyData.Conditions
+    $policyObject.grantControls = $policyData.GrantControls
+    $policyObject.id = $policyData.sessionControls
+    $policyObject | ConvertTo-Json -Depth 99
+}
+ <#  ForEach($propertyName in ($policyData.Conditions.users | Get-Member  -MemberType Property).name  ) 
    {
        If ([string]::IsNullOrEmpty($policyData.Conditions.users.$propertyName)) {
            Write-Host $propertyName
@@ -132,4 +139,4 @@ forEach ($policyId in $listPolicyIds) {
     #$displayName = $policyData.DisplayName
    }
 
-}
+}#>

@@ -25,7 +25,7 @@ param(
     [string]$resourceAppId = '00000003-0000-0000-c000-000000000000'
 )
 
-Connect-MgGraph -Scopes Directory.AccessAsUser.All
+#Connect-MgGraph -Scopes Directory.AccessAsUser.All
 
 $resourceAppObjId = (Get-MgServicePrincipal -Filter "appid eq '$($resourceAppId)'").Id
 
