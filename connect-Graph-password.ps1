@@ -1,37 +1,42 @@
 function Import-Bulkdata {
     param (
-        [string]$users,
+        [array]$users,
         [string]$sqlliteconnection
     )
-    
+
+
+    $tempArray = @()
+    foreach ($user in $users) {
+        $item = New-Object psobject -Property @{
+            Id = $user.Id
+            displayName = $user.displayName
+            assignedLicenses = $user.assignedLicenses
+            signInActivity = $user.signInActivity
+            onPremisesSyncEnabled = $user.onPremisesSyncEnabled
+            externalUserState = $user.externalUserState
+        }
+        $tempArray += $item
+        
+    }
 $columns = (($tempArray | Get-Member -MemberType NoteProperty).Name -join ", ")
-$command = $sqlliteconnection.CreateCommand()
 
-$transaction = $sqlliteconnection.BeginTransaction()
+# Initialize the bulk insert query string
+$query = "INSERT INTO $tableName ($columns) VALUES "
 
-$command.CommandText = "INSERT INTO your_table ($($columns)) VALUES (@Id, @displayName, @lastSignInDateTime, @onPremisesSyncEnabled, @externalUserState);"
-$command.Parameters.Add((New-Object Data.SQLite.SQLiteParameter("@Id", $userId)))
-$command.Parameters.Add((New-Object Data.SQLite.SQLiteParameter("@displayName", $userDisplayName)))
-$command.Parameters.Add((New-Object Data.SQLite.SQLiteParameter("@lastSignInDateTime", $userSignInActivity)))
-$command.Parameters.Add((New-Object Data.SQLite.SQLiteParameter("@onPremisesSyncEnabled", $userOnPremisesSyncEnabled)))
-$command.Parameters.Add((New-Object Data.SQLite.SQLiteParameter("@externalUserState", $userExternalUserState)))
+# Compose the values part of the query
+$values = $tempArray | ForEach-Object {
+    $row = $_.PSObject.Properties.Value -join "', '"
+    "('$row')"
+} -join ", "
 
-forEach ($user in $users) {
-    $command.Parameters["@Id"].Value = $user.Id
-    $command.Parameters["@displayName"].Value = $user.displayName
-    $command.Parameters["@lastSignInDateTime"].Value = $user.signInActivity.lastSignInDateTime
-    $command.Parameters["@onPremisesSyncEnabled"].Value = $user.onPremisesSyncEnabled
-    $command.Parameters["@externalUserState"].Value = $user.externalUserState
+# Combine the query and values
+$bulkInsertQuery = "$query $values;"
 
-    # Execute the command
-    $command.ExecuteNonQuery()
+Invoke-MySQLiteQuery -Path $sqlliteconnection -Query $bulkInsertQuery
 }
 
 
-$transaction.Commit()
-$command.Dispose()
 
-}
 $uri = "https://login.microsoftonline.com/9dd7796e-60f8-47be-a0e4-c407efe3201c/oauth2/v2.0/token"
 #$username = 'dailyuser@azurenow.win'
 #$password = "Greencar17"
@@ -65,20 +70,6 @@ write-host "Obtained access token"
 #create sqllite database and table
 
 $sqliteDB = "C:\Temp\graph.db"
-$sqlightDll = "C:\Program Files\SQLite\System.Data.SQLite.dll"
-[Reflection.Assembly]::LoadFile($sqlightDll)
-if (Test-Path $sqliteDB) {
-    Remove-Item $sqliteDB -Force
- }
-[System.Data.SQLite.SQLiteConnection]::CreateFile($sqliteDB)
-$databaseConnectionString=[string]::Format("data source={0}",$sqliteDB)
-$sqliteDBConnection = New-Object System.Data.SQLite.SQLiteConnection
-$sqliteDBConnection.ConnectionString = $databaseConnectionString
-$sqliteDBConnection.open()
-$sqlitedbCommand = $sqliteDBConnection.CreateCommand()
-$sqlitedbCommand.CommandText="create table users (Id varchar(100), displayName varchar(100), lastSignInDateTime varchar(100), onPremisesSyncEnabled varchar(100), externalUserState varchar(100))"
-$sqlitedbCommand.CommandType = [System.Data.CommandType]::Text
-$sqlitedbCommand.ExecuteNonQuery()
 
 
 #$createTable = "CREATE TABLE IF NOT EXISTS users (Id TEXT PRIMARY KEY, displayName TEXT, lastSignInDateTime TEXT, onPremisesSyncEnabled TEXT, externalUserState TEXT);"
@@ -101,6 +92,8 @@ $queryHeaders = @{
 
 
 $outputData = @()
+New-MySQLiteDB -Path $sqliteDB -Comment "work data and reporting"
+New-MySQLiteDBTable -Path $sqliteDB -TableName UserData -ColumnNames "Id","displayName","assignedLicenses","signInActivity","onPremisesSyncEnabled","externalUserState"
 #Send request 
 while (!([string]::IsNullOrEmpty($queryURI))) {
     
@@ -113,10 +106,7 @@ while (!([string]::IsNullOrEmpty($queryURI))) {
         #$tempArray = extract-lastsignin -users $queryResult.value
 
        
-        $columns = (($tempArray | Get-Member -MemberType NoteProperty).Name -join ", ")
-        $values = ($tempArray | ForEach-Object { "('$($_.Id)', '$($_.displayName)', '$($_.lastSignInDateTime)', '$($_.onPremisesSyncEnabled)', '$($_.externalUserState)')" }) -join ", "
-        $sql_insert_statement = "INSERT INTO users ($columns) VALUES $values;"
-      #& $sqlightCMD $sqliteDB "INSERT OR REPLACE INTO users (Id, displayName, lastSignInDateTime, onPremisesSyncEnabled, externalUserState) VALUES ('$userId', '$userDisplayName', '$userSignInActivity', '$userOnPremisesSyncEnabled', '$userExternalUserState');"
+
       Write-Progress -Activity "Gteting data form Graph" -Status "Processing $($processedBatch) of $($totalusers) users" -percentcomplete (($processedBatch / $totalusers) * 100)
       Import-Bulkdata -users $queryResult.value -sqlliteconnection $sqliteDBConnection
         $queryURI = $queryResult.'@odata.nextLink'
